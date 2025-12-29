@@ -118,8 +118,8 @@
             <p class="text-2xl font-bold tracking-widest">ライフプラン・キャッシュフロー分析報告書</p>
         </div>
         <div class="text-xl">
-            <p class="mb-2">顧客名：<span class="clientNameLabel">ご相談者様</span> 閣下</p>
-            <p class="mb-8">作成日：2025年1月2日</p>
+            <p class="mb-2">顧客名：<span class="clientNameLabel">ご相談者様</span></p>
+            <p class="mb-8">作成日：<span class="todayDateLabel"></span></p>
             <div class="h-1 w-20 bg-white mb-8 mx-auto"></div>
             <p class="text-sm tracking-widest uppercase">Prepared by FP Consulting Service</p>
         </div>
@@ -132,7 +132,10 @@
             <div>
                 <p class="text-xs uppercase tracking-widest opacity-70 mb-1">Financial Simulation</p>
                 <h1 class="text-xl md:text-3xl font-medium tracking-tight">キャッシュフロー・シミュレーション</h1>
-                <p class="text-slate-400 text-xs md:sm mt-2 font-light">顧客名: <span id="displayClientName" class="clientNameLabel font-bold text-white">ご相談者様</span></p>
+                <div class="flex flex-wrap gap-x-4 gap-y-1 text-slate-400 text-xs md:sm mt-2 font-light">
+                    <p>顧客名: <span id="displayClientName" class="clientNameLabel font-bold text-white">ご相談者様</span></p>
+                    <p>作成日: <span class="todayDateLabel"></span></p>
+                </div>
             </div>
             <div class="flex gap-3 no-print">
                 <button onclick="openModal('loadModal')" class="bg-slate-700 hover:bg-slate-600 text-white text-xs px-4 py-2 rounded transition">過去の読込</button>
@@ -238,7 +241,7 @@
     <div id="loadModal" class="modal-backdrop">
         <div class="modal-content">
             <h2 class="text-xl font-bold mb-4">保存済みプラン一覧</h2>
-            <div id="planList" class="space-y-3 mb-6 max-h-96 overflow-y-auto border-t border-slate-100 pt-4"></div>
+            <div id="planList" class="space-y-3 mb-6 max-h-96 overflow-y-auto border-t border-slate-100 pt-4 text-sm"></div>
             <div class="flex justify-end">
                 <button onclick="closeModal('loadModal')" class="px-6 py-2 text-slate-500 font-bold border border-slate-200 rounded-lg">閉じる</button>
             </div>
@@ -339,10 +342,6 @@
                 document.getElementById('child2Age').value = p.config.child2Age;
                 document.getElementById('child3Age').value = p.config.child3Age;
                 document.getElementById('duration').value = p.config.duration;
-                
-                // Clear all values first to avoid overlap
-                document.querySelectorAll('.income-input, .expense-input').forEach(el => el.value = "0");
-                
                 p.incomes.forEach(i => { const el = document.querySelector(`.income-input[data-cat="${i.cat}"][data-col="${i.col}"]`); if (el) el.value = i.val; });
                 p.expenses.forEach(e => { const el = document.querySelector(`.expense-input[data-cat="${e.cat}"][data-col="${e.col}"]`); if (el) el.value = e.val; });
                 const memos = document.querySelectorAll('.memo-input');
@@ -407,9 +406,8 @@
             
             html += `<tr class="bg-blue-100/30 font-bold"><td class="p-4 border-b sticky-col bg-white text-[#002D5B]">【収入合計】</td>${intervals.map((_, i) => `<td class="p-4 border-b text-center text-slate-900" data-type="totalIncome" data-col="${i}">0</td>`).join('')}</tr>`;
             html += `<tr class="text-xs"><td class="p-3 border-b sticky-col bg-white pl-8">本人収入</td>${intervals.map((_, i) => `<td class="p-2 border-b"><input type="number" class="table-input income-input" data-cat="self" data-col="${i}" value="${[500,520,540,560,580,400,180][i]}" onchange="updateSimulation()"></td>`).join('')}</tr>`;
-            html += `<tr class="text-xs"><td class="p-3 border-b sticky-col bg-white pl-8">配偶者収入</td>${intervals.map((_, i) => `<td class="p-2 border-b"><input type="number" class="table-input income-input" data-cat="spouse" data-col="${i}" value="${[150,150,150,100,80,60,60][i]}" onchange="updateSimulation()"></td>`).join('')}</tr>`;
+            html += `<tr class="text-xs border-b-2"><td class="p-3 border-b sticky-col bg-white pl-8">配偶者収入</td>${intervals.map((_, i) => `<td class="p-2 border-b"><input type="number" class="table-input income-input" data-cat="spouse" data-col="${i}" value="${[150,150,150,100,80,60,60][i]}" onchange="updateSimulation()"></td>`).join('')}</tr>`;
             
-            // 一時的な収入行の追加
             html += `<tr class="text-xs border-b-2"><td class="p-3 border-b sticky-col bg-white pl-8">一時的な収入</td>${intervals.map((_, i) => `<td class="p-2 border-b"><input type="number" class="table-input income-input" data-cat="tempInc" data-col="${i}" value="0" onchange="updateSimulation()"></td>`).join('')}</tr>`;
             
             html += `<tr class="bg-rose-100/30 font-bold"><td class="p-4 border-b sticky-col bg-white text-rose-900">【支出合計】</td>${intervals.map((_, i) => `<td class="p-4 border-b text-center text-rose-700" data-type="totalExpense" data-col="${i}">0</td>`).join('')}</tr>`;
@@ -425,19 +423,17 @@
 
         window.updateSimulation = () => {
             const baseAge = parseInt(document.getElementById('baseAge').value || 0);
-            const durationInput = document.getElementById('duration');
-            const duration = parseInt(durationInput ? durationInput.value : 50);
+            const duration = parseInt(document.getElementById('duration').value || 50);
             const spouseAge = parseInt(document.getElementById('spouseAge').value || 0);
-            const childCountEl = document.getElementById('childCount');
-            const childCount = childCountEl ? parseInt(childCountEl.value) : 0;
+            const childCount = parseInt(document.getElementById('childCount').value);
             const c1 = parseInt(document.getElementById('child1Age').value || 0);
             const c2 = parseInt(document.getElementById('child2Age').value || 0);
             const c3 = parseInt(document.getElementById('child3Age').value || 0);
 
             // 子供の入力欄表示制御
-            const c1Box = document.getElementById('c1Box'); if (c1Box) c1Box.style.display = childCount >= 1 ? 'block' : 'none';
-            const c2Box = document.getElementById('c2Box'); if (c2Box) c2Box.style.display = childCount >= 2 ? 'block' : 'none';
-            const c3Box = document.getElementById('c3Box'); if (c3Box) c3Box.style.display = childCount >= 3 ? 'block' : 'none';
+            document.getElementById('c1Box').style.display = childCount >= 1 ? 'block' : 'none';
+            document.getElementById('c2Box').style.display = childCount >= 2 ? 'block' : 'none';
+            document.getElementById('c3Box').style.display = childCount >= 3 ? 'block' : 'none';
 
             document.getElementById('summaryDuration').textContent = `${baseAge}歳 〜 ${baseAge + duration}歳`;
 
@@ -447,49 +443,37 @@
             const childRow = document.getElementById('rowChildrenAge');
             intervals.forEach((offset, i) => {
                 if (i === 0) return;
-                if (selfRow.cells[i+1]) selfRow.cells[i+1].textContent = `${baseAge + offset}歳`;
-                if (spouseRow.cells[i+1]) spouseRow.cells[i+1].textContent = `${spouseAge + offset}歳`;
+                selfRow.cells[i+1].textContent = `${baseAge + offset}歳`;
+                spouseRow.cells[i+1].textContent = `${spouseAge + offset}歳`;
                 
                 let cText = [];
                 if (childCount >= 1) cText.push(`子1:${c1+offset}`);
                 if (childCount >= 2) cText.push(`子2:${c2+offset}`);
                 if (childCount >= 3) cText.push(`子3:${c3+offset}`);
-                if (childRow.cells[i+1]) childRow.cells[i+1].innerHTML = cText.length > 0 ? cText.join('<br>') : '---';
+                childRow.cells[i+1].innerHTML = cText.length > 0 ? cText.join('<br>') : '---';
             });
 
             let runningAssets = 800;
             const eventLabels = [];
             for (let col = 0; col < intervals.length; col++) {
-                let tInc = 0; 
-                document.querySelectorAll(`.income-input[data-col="${col}"]`).forEach(el => tInc += parseInt(el.value || 0));
-                const incEl = document.querySelector(`[data-type="totalIncome"][data-col="${col}"]`);
-                if (incEl) incEl.textContent = tInc;
-
-                let tExp = 0; 
-                document.querySelectorAll(`.expense-input[data-col="${col}"]`).forEach(el => tExp += parseInt(el.value || 0));
-                const expEl = document.querySelector(`[data-type="totalExpense"][data-col="${col}"]`);
-                if (expEl) expEl.textContent = tExp;
-
+                let tInc = 0; document.querySelectorAll(`.income-input[data-col="${col}"]`).forEach(el => tInc += parseInt(el.value || 0));
+                document.querySelector(`[data-type="totalIncome"][data-col="${col}"]`).textContent = tInc;
+                let tExp = 0; document.querySelectorAll(`.expense-input[data-col="${col}"]`).forEach(el => tExp += parseInt(el.value || 0));
+                document.querySelector(`[data-type="totalExpense"][data-col="${col}"]`).textContent = tExp;
                 const bal = tInc - tExp;
                 const balEl = document.querySelector(`[data-type="balance"][data-col="${col}"]`);
-                if (balEl) {
-                    balEl.textContent = (bal >= 0 ? "+" : "") + bal;
-                    balEl.className = `p-4 border-b text-center font-bold ${bal >= 0 ? "positive" : "negative"}`;
-                }
-
+                balEl.textContent = (bal >= 0 ? "+" : "") + bal;
+                balEl.className = `p-4 border-b text-center font-bold ${bal >= 0 ? "positive" : "negative"}`;
                 if (col > 0) runningAssets += (bal * 5);
                 const assetEl = document.querySelector(`[data-type="assets"][data-col="${col}"]`);
-                if (assetEl) {
-                    assetEl.textContent = Math.max(0, runningAssets).toLocaleString();
-                    assetEl.className = `p-4 text-center font-bold ${runningAssets >= 0 ? "text-emerald-700" : "text-rose-700"}`;
-                }
-
+                assetEl.textContent = Math.max(0, runningAssets).toLocaleString();
+                assetEl.className = `p-4 text-center font-bold ${runningAssets >= 0 ? "text-emerald-700" : "text-rose-700"}`;
                 if (col === 0) {
                     document.getElementById('summaryBalance').textContent = `¥${bal.toLocaleString()},000`;
                     document.getElementById('summaryRisk').textContent = runningAssets < 0 ? 'High Risk' : (bal < 0 ? 'Warning' : 'Normal');
                 }
-                const memoEl = document.querySelector(`.event-memo[data-col="${col}"]`);
-                eventLabels.push(memoEl ? memoEl.value : "");
+                const memo = document.querySelector(`.event-memo[data-col="${col}"]`).value;
+                eventLabels.push(memo || "");
             }
             renderCharts(baseAge, eventLabels);
         };
@@ -511,27 +495,32 @@
                 }
             });
 
-            const assetCtx = document.getElementById('assetChart');
-            if (assetCtx) {
-                if (assetChart) assetChart.destroy();
-                assetChart = new Chart(assetCtx.getContext('2d'), {
-                    type: 'line',
-                    data: { labels, datasets: [{ label: '金融資産', data: assets, borderColor: '#002D5B', backgroundColor: 'rgba(0, 45, 91, 0.05)', fill: true, tension: 0.3, pointRadius: 5 }] },
-                    options: { maintainAspectRatio: false, plugins: { legend: { display: false }, annotation: { annotations } }, scales: { y: { beginAtZero: true } } }
-                });
-            }
+            if (assetChart) assetChart.destroy();
+            assetChart = new Chart(document.getElementById('assetChart').getContext('2d'), {
+                type: 'line',
+                data: { labels, datasets: [{ label: '金融資産', data: assets, borderColor: '#002D5B', backgroundColor: 'rgba(0, 45, 91, 0.05)', fill: true, tension: 0.3, pointRadius: 5 }] },
+                options: { maintainAspectRatio: false, plugins: { legend: { display: false }, annotation: { annotations } }, scales: { y: { beginAtZero: true } } }
+            });
 
-            const balanceCtx = document.getElementById('balanceChart');
-            if (balanceCtx) {
-                if (balanceChart) balanceChart.destroy();
-                balanceChart = new Chart(balanceCtx.getContext('2d'), {
-                    type: 'bar',
-                    data: { labels, datasets: [{ label: '収入', data: incomes, backgroundColor: '#93c5fd' }, { label: '支出', data: expenses, backgroundColor: '#fca5a5' }] },
-                    options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
-                });
-            }
+            if (balanceChart) balanceChart.destroy();
+            balanceChart = new Chart(document.getElementById('balanceChart').getContext('2d'), {
+                type: 'bar',
+                data: { labels, datasets: [{ label: '収入', data: incomes, backgroundColor: '#93c5fd' }, { label: '支出', data: expenses, backgroundColor: '#fca5a5' }] },
+                options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+            });
         }
-        document.addEventListener('DOMContentLoaded', initTable);
+
+        // 日付の初期化
+        function initDate() {
+            const today = new Date();
+            const formattedDate = today.getFullYear() + '年' + (today.getMonth() + 1) + '月' + today.getDate() + '日';
+            document.querySelectorAll('.todayDateLabel').forEach(el => el.textContent = formattedDate);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initDate();
+            initTable();
+        });
     </script>
 </body>
 </html>
