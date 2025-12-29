@@ -47,7 +47,7 @@
             left: 0;
             background-color: white;
             z-index: 10;
-            border-right-width: 2px !important;
+            border-right: 2px solid #e2e8f0 !important;
         }
         .bg-slate-100.sticky-col { background-color: #f1f5f9; }
         
@@ -57,7 +57,6 @@
             width: 100%;
         }
 
-        /* Modal styling for Save/Load */
         .modal-backdrop {
             display: none;
             position: fixed;
@@ -88,37 +87,37 @@
                 <p class="text-slate-400 text-xs md:sm mt-1">作成日: 2025年1月2日 | 顧客名: <span id="displayClientName">ご相談者様</span></p>
             </div>
             <div class="flex gap-2 no-print">
-                <button onclick="openModal('saveModal')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3 py-1 rounded">保存</button>
-                <button onclick="openModal('loadModal')" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 rounded">読込</button>
+                <button onclick="openModal('saveModal')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3 py-2 rounded font-bold">保存</button>
+                <button onclick="openModal('loadModal')" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-2 rounded font-bold">読込</button>
             </div>
         </div>
 
         <div class="p-4 md:p-6">
             <!-- Summary Cards -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
-                    <p class="text-[10px] text-blue-600 font-bold uppercase mb-1">シミュレーション期間</p>
+                <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded shadow-sm">
+                    <p class="text-[10px] text-blue-600 font-bold uppercase mb-1 tracking-wider">シミュレーション期間</p>
                     <p class="text-lg font-bold text-slate-800" id="summaryDuration">---</p>
                 </div>
-                <div class="bg-emerald-50 border-l-4 border-emerald-500 p-4 rounded">
-                    <p class="text-[10px] text-emerald-600 font-bold uppercase mb-1">現在の年間収支</p>
+                <div class="bg-emerald-50 border-l-4 border-emerald-500 p-4 rounded shadow-sm">
+                    <p class="text-[10px] text-emerald-600 font-bold uppercase mb-1 tracking-wider">現在の年間収支</p>
                     <p class="text-lg font-bold text-slate-800" id="summaryBalance">---</p>
                 </div>
-                <div class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded">
-                    <p class="text-[10px] text-amber-600 font-bold uppercase mb-1">主要なイベント</p>
+                <div class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded shadow-sm">
+                    <p class="text-[10px] text-amber-600 font-bold uppercase mb-1 tracking-wider">主要なイベント</p>
                     <p class="text-lg font-bold text-slate-800">各年代の推移確認</p>
                 </div>
             </div>
 
             <!-- Charts -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                <div class="bg-white border rounded-xl p-4">
+                <div class="bg-white border rounded-xl p-4 shadow-sm">
                     <h3 class="text-xs font-bold text-slate-500 mb-2 uppercase">金融資産残高の推移</h3>
                     <div class="chart-container">
                         <canvas id="assetChart"></canvas>
                     </div>
                 </div>
-                <div class="bg-white border rounded-xl p-4">
+                <div class="bg-white border rounded-xl p-4 shadow-sm">
                     <h3 class="text-xs font-bold text-slate-500 mb-2 uppercase">年間収支バランス</h3>
                     <div class="chart-container">
                         <canvas id="balanceChart"></canvas>
@@ -127,7 +126,7 @@
             </div>
 
             <!-- Table -->
-            <div class="overflow-x-auto border border-slate-200 rounded-xl">
+            <div class="overflow-x-auto border border-slate-200 rounded-xl shadow-sm">
                 <table class="w-full text-left border-collapse text-sm" id="cfTable">
                     <thead>
                         <tr class="bg-slate-100 text-slate-700">
@@ -135,7 +134,7 @@
                                 <div class="flex flex-col">
                                     <span>経過年数</span>
                                     <div class="flex items-center mt-1 no-print">
-                                        <input type="number" id="duration" value="50" class="w-10 text-[10px] border rounded px-1" onchange="updateSimulation()">
+                                        <input type="number" id="duration" value="50" class="w-10 text-[10px] border border-slate-300 rounded px-1" onchange="updateSimulation()">
                                         <span class="text-[9px] ml-1">年予測</span>
                                     </div>
                                 </div>
@@ -150,94 +149,91 @@
                         </tr>
                     </thead>
                     <tbody id="tableBody" class="text-slate-600">
-                        <!-- JS fills this -->
+                        <!-- Filled by JS -->
                     </tbody>
                 </table>
             </div>
-            <p class="mt-4 text-[10px] text-slate-400">※保存ボタンからクラウドへデータを保存できます。</p>
+            <p class="mt-4 text-[10px] text-slate-400 no-print">※「保存」ボタンから、入力内容をクラウドに記録できます。</p>
         </div>
 
         <!-- Footer -->
         <div class="bg-slate-50 p-6 border-t flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div class="text-sm text-slate-500">
-                <strong>診断コメント:</strong> 保存機能を追加しました。複数の顧客データを個別に管理できます。
+            <div class="text-sm text-slate-500 max-w-2xl">
+                <strong>診断コメント:</strong> 保存・読込機能により、複数のシミュレーションを切り替えて比較できます。各家庭の将来計画にお役立てください。
             </div>
-            <button onclick="window.print()" class="no-print bg-blue-600 text-white px-8 py-3 rounded-lg font-bold shadow-lg">
+            <button onclick="window.print()" class="no-print bg-slate-800 hover:bg-black text-white px-8 py-3 rounded-lg font-bold shadow-lg transition">
                 印刷 / PDF保存
             </button>
         </div>
     </div>
 
     <!-- Modals -->
-    <div id="saveModal" class="modal-backdrop flex">
+    <div id="saveModal" class="modal-backdrop">
         <div class="modal-content">
             <h2 class="text-xl font-bold mb-4">プランを保存する</h2>
             <p class="text-sm text-slate-500 mb-4">保存する名前（顧客名など）を入力してください。</p>
-            <input type="text" id="saveNameInput" class="w-full border p-2 rounded mb-4" placeholder="例：田中様プラン">
-            <div class="flex justify-end gap-2">
-                <button onclick="closeModal('saveModal')" class="px-4 py-2 text-slate-500">キャンセル</button>
-                <button id="saveBtn" onclick="savePlan()" class="bg-emerald-600 text-white px-4 py-2 rounded">保存実行</button>
+            <input type="text" id="saveNameInput" class="w-full border p-3 rounded mb-6 text-lg" placeholder="例：田中様プラン">
+            <div class="flex justify-end gap-3">
+                <button onclick="closeModal('saveModal')" class="px-4 py-2 text-slate-500 font-bold">キャンセル</button>
+                <button id="saveBtn" onclick="savePlan()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded font-bold shadow">保存実行</button>
             </div>
         </div>
     </div>
 
-    <div id="loadModal" class="modal-backdrop flex">
+    <div id="loadModal" class="modal-backdrop">
         <div class="modal-content">
             <h2 class="text-xl font-bold mb-4">プランを読み込む</h2>
-            <div id="planList" class="space-y-2 mb-4 max-h-60 overflow-y-auto">
+            <div id="planList" class="space-y-2 mb-6 max-h-64 overflow-y-auto border-t pt-4">
                 <p class="text-slate-400 italic">読込中...</p>
             </div>
             <div class="flex justify-end">
-                <button onclick="closeModal('loadModal')" class="px-4 py-2 text-slate-500">閉じる</button>
+                <button onclick="closeModal('loadModal')" class="px-4 py-2 text-slate-500 font-bold border rounded">閉じる</button>
             </div>
         </div>
     </div>
 
-    <!-- Firebase SDK -->
+    <!-- Firebase SDK Implementation -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, getDoc, getDocs, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Firebase Configuration
-        const firebaseConfig = JSON.parse(__firebase_config);
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'cashflow-sim-storage';
-
+        let db, auth, appId;
         let currentUser = null;
 
-        // Auth initialization
-        const initAuth = async () => {
+        const setupFirebase = async () => {
             try {
+                const firebaseConfig = JSON.parse(__firebase_config);
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                appId = typeof __app_id !== 'undefined' ? __app_id : 'cashflow-sim-default';
+
+                // Rule 3: Auth First
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await signInWithCustomToken(auth, __initial_auth_token);
                 } else {
                     await signInAnonymously(auth);
                 }
-            } catch (error) {
-                console.error("Auth failed:", error);
+
+                onAuthStateChanged(auth, (user) => {
+                    currentUser = user;
+                });
+            } catch (err) {
+                console.error("Firebase setup error:", err);
             }
         };
 
-        onAuthStateChanged(auth, (user) => {
-            currentUser = user;
-            if (user) {
-                // Once authenticated, we can fetch list if needed
-            }
-        });
-
-        // Global functions for Save/Load
+        // Define Global Functions in Window
         window.savePlan = async () => {
             if (!currentUser) {
-                alert("認証エラーが発生しました。ページをリロードしてください。");
+                alert("認証中です。数秒待ってから再度お試しください。");
                 return;
             }
 
             const name = document.getElementById('saveNameInput').value.trim();
             if (!name) {
-                alert("保存する名前を入力してください。");
+                alert("名前を入力してください。");
                 return;
             }
 
@@ -246,7 +242,6 @@
             saveBtn.textContent = "保存中...";
 
             try {
-                // Collect all inputs
                 const data = {
                     name: name,
                     updatedAt: serverTimestamp(),
@@ -271,16 +266,17 @@
                     memos: Array.from(document.querySelectorAll('.memo-input')).map(el => el.value)
                 };
 
-                const scenarioId = name.replace(/\s+/g, '_');
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'scenarios', scenarioId);
+                // ID safe naming
+                const safeId = encodeURIComponent(name).replace(/%/g, '_');
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'scenarios', safeId);
                 await setDoc(docRef, data);
 
-                alert(`${name} として保存完了しました。`);
+                alert(`${name} として保存しました。`);
                 document.getElementById('displayClientName').textContent = name;
                 closeModal('saveModal');
             } catch (err) {
-                console.error(err);
-                alert("保存に失敗しました。");
+                console.error("Save error:", err);
+                alert("保存中にエラーが発生しました。");
             } finally {
                 saveBtn.disabled = false;
                 saveBtn.textContent = "保存実行";
@@ -289,33 +285,31 @@
 
         window.loadPlansList = async () => {
             const listArea = document.getElementById('planList');
-            listArea.innerHTML = '<p class="text-slate-400 italic">読込中...</p>';
-
+            listArea.innerHTML = '<p class="text-slate-400 italic">プランを取得中...</p>';
             if (!currentUser) return;
 
             try {
                 const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'scenarios');
-                const snapshot = await getDocs(colRef);
+                const snap = await getDocs(colRef);
                 
-                if (snapshot.empty) {
-                    listArea.innerHTML = '<p class="text-slate-400">保存されたプランはありません。</p>';
+                if (snap.empty) {
+                    listArea.innerHTML = '<p class="text-slate-500">保存されたプランはありません。</p>';
                     return;
                 }
 
                 listArea.innerHTML = '';
-                snapshot.forEach((d) => {
+                snap.forEach((d) => {
                     const plan = d.data();
                     const item = document.createElement('div');
-                    item.className = "flex justify-between items-center p-3 border rounded hover:bg-slate-50 transition";
+                    item.className = "flex justify-between items-center p-3 border rounded-lg hover:bg-slate-50 transition";
                     item.innerHTML = `
-                        <button onclick="window.fetchAndLoadPlan('${d.id}')" class="flex-grow text-left font-bold text-blue-600">${plan.name}</button>
-                        <button onclick="window.deletePlan('${d.id}')" class="text-rose-500 text-xs ml-2">削除</button>
+                        <button onclick="window.fetchAndLoadPlan('${d.id}')" class="flex-grow text-left font-bold text-blue-600 truncate mr-2">${plan.name}</button>
+                        <button onclick="window.deletePlan('${d.id}')" class="text-rose-500 text-xs px-2 py-1 border border-rose-100 rounded hover:bg-rose-50">削除</button>
                     `;
                     listArea.appendChild(item);
                 });
             } catch (err) {
-                console.error(err);
-                listArea.innerHTML = '<p class="text-rose-500">リストの取得に失敗しました。</p>';
+                listArea.innerHTML = '<p class="text-rose-500">リスト取得エラー</p>';
             }
         };
 
@@ -324,66 +318,51 @@
                 const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'scenarios', id);
                 const snap = await getDoc(docRef);
                 if (!snap.exists()) return;
+                const p = snap.data();
 
-                const plan = snap.data();
-                
-                // Set Config
-                document.getElementById('baseAge').value = plan.config.baseAge;
-                document.getElementById('spouseAge').value = plan.config.spouseAge;
-                document.getElementById('child1Age').value = plan.config.child1Age;
-                document.getElementById('child2Age').value = plan.config.child2Age;
-                document.getElementById('child3Age').value = plan.config.child3Age;
-                document.getElementById('duration').value = plan.config.duration;
+                document.getElementById('baseAge').value = p.config.baseAge;
+                document.getElementById('spouseAge').value = p.config.spouseAge;
+                document.getElementById('child1Age').value = p.config.child1Age;
+                document.getElementById('child2Age').value = p.config.child2Age;
+                document.getElementById('child3Age').value = p.config.child3Age;
+                document.getElementById('duration').value = p.config.duration;
 
-                // Set Incomes
-                plan.incomes.forEach(i => {
+                p.incomes.forEach(i => {
                     const el = document.querySelector(`.income-input[data-cat="${i.cat}"][data-col="${i.col}"]`);
                     if (el) el.value = i.val;
                 });
-
-                // Set Expenses
-                plan.expenses.forEach(e => {
-                    const el = document.querySelector(`.expense-input[data-cat="${e.cat}"][data-col="${e.col}"]`);
-                    if (el) el.value = i.val; // Fix typo from logic check: should be e.val
-                });
-                // Wait, re-map correctly
-                plan.expenses.forEach(e => {
+                p.expenses.forEach(e => {
                     const el = document.querySelector(`.expense-input[data-cat="${e.cat}"][data-col="${e.col}"]`);
                     if (el) el.value = e.val;
                 });
 
-                // Set Memos
                 const memos = document.querySelectorAll('.memo-input');
-                plan.memos.forEach((text, idx) => {
-                    if (memos[idx]) memos[idx].value = text;
-                });
+                p.memos.forEach((txt, idx) => { if (memos[idx]) memos[idx].value = txt; });
 
-                document.getElementById('displayClientName').textContent = plan.name;
+                document.getElementById('displayClientName').textContent = p.name;
                 window.updateSimulation();
                 closeModal('loadModal');
-                alert(`${plan.name} を読み込みました。`);
             } catch (err) {
-                console.error(err);
-                alert("プランの読込に失敗しました。");
+                alert("読み込みに失敗しました。");
             }
         };
 
         window.deletePlan = async (id) => {
-            if (!confirm("このプランを削除しますか？")) return;
+            if (!confirm("このプランを完全に削除しますか？")) return;
             try {
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'scenarios', id);
-                await deleteDoc(docRef);
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'scenarios', id));
                 window.loadPlansList();
             } catch (err) {
-                alert("削除に失敗しました。");
+                alert("削除エラー");
             }
         };
 
-        initAuth();
+        // Kick off setup
+        setupFirebase();
     </script>
 
     <script>
-        // UI Helpers
+        // Main Logic & UI
         window.openModal = (id) => {
             document.getElementById(id).style.display = 'flex';
             if (id === 'loadModal') window.loadPlansList();
@@ -395,7 +374,6 @@
         let assetChart = null;
         let balanceChart = null;
         const intervals = [0, 5, 10, 15, 20, 25, 30];
-
         const expenseCats = [
             {id:'basicLiving', label:'基本生活費', def:240},
             {id:'housing', label:'住居関連費', def:120},
@@ -412,7 +390,7 @@
 
             html += `<tr class="bg-amber-50/20" id="rowLifeEvent">
                 <td class="p-3 border-b sticky-col font-bold bg-amber-50/50">ライフイベント</td>
-                ${intervals.map(() => `<td class="p-2 border-b"><textarea class="memo-input" placeholder="イベント等"></textarea></td>`).join('')}
+                ${intervals.map(() => `<td class="p-2 border-b"><textarea class="memo-input" placeholder="予定など"></textarea></td>`).join('')}
             </tr>`;
 
             html += `<tr class="bg-slate-50/50" id="rowSelfAge">
@@ -443,10 +421,12 @@
                 <td class="p-3 border-b sticky-col bg-white">【収入合計】</td>
                 ${intervals.map((_, i) => `<td class="p-3 border-b text-center ${i===0?'bg-blue-100/50':''}" data-type="totalIncome" data-col="${i}">0</td>`).join('')}
             </tr>`;
-            html += `<tr class="text-xs"><td class="p-3 border-b sticky-col bg-white pl-6">本人収入</td>
+            html += `<tr class="text-xs">
+                <td class="p-3 border-b sticky-col bg-white pl-6">本人収入</td>
                 ${intervals.map((_, i) => `<td class="p-2 border-b ${i===0?'bg-blue-50/20':''}"><input type="number" class="table-input income-input" data-cat="self" data-col="${i}" value="${[500,520,540,560,580,400,180][i]}" onchange="updateSimulation()"></td>`).join('')}
             </tr>`;
-            html += `<tr class="text-xs border-b-2"><td class="p-3 border-b sticky-col bg-white pl-6">配偶者収入</td>
+            html += `<tr class="text-xs border-b-2">
+                <td class="p-3 border-b sticky-col bg-white pl-6">配偶者収入</td>
                 ${intervals.map((_, i) => `<td class="p-2 border-b ${i===0?'bg-blue-50/20':''}"><input type="number" class="table-input income-input" data-cat="spouse" data-col="${i}" value="${[150,150,150,100,80,60,60][i]}" onchange="updateSimulation()"></td>`).join('')}
             </tr>`;
 
