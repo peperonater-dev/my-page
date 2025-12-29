@@ -87,8 +87,8 @@
                 <p class="text-slate-400 text-xs md:sm mt-1">作成日: 2025年1月2日 | 顧客名: <span id="displayClientName">ご相談者様</span></p>
             </div>
             <div class="flex gap-2 no-print">
-                <button onclick="openModal('saveModal')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3 py-2 rounded font-bold">保存</button>
-                <button onclick="openModal('loadModal')" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-2 rounded font-bold">読込</button>
+                <button onclick="openModal('saveModal')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3 py-2 rounded font-bold shadow-sm transition">保存</button>
+                <button onclick="openModal('loadModal')" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-2 rounded font-bold shadow-sm transition">読込</button>
             </div>
         </div>
 
@@ -125,7 +125,6 @@
                 </div>
             </div>
 
-            <!-- Table -->
             <div class="overflow-x-auto border border-slate-200 rounded-xl shadow-sm">
                 <table class="w-full text-left border-collapse text-sm" id="cfTable">
                     <thead>
@@ -148,18 +147,14 @@
                             <th class="p-3 border-b border-slate-200 text-center font-normal text-xs">30年後</th>
                         </tr>
                     </thead>
-                    <tbody id="tableBody" class="text-slate-600">
-                        <!-- Filled by JS -->
-                    </tbody>
+                    <tbody id="tableBody" class="text-slate-600"></tbody>
                 </table>
             </div>
-            <p class="mt-4 text-[10px] text-slate-400 no-print">※「保存」ボタンから、入力内容をクラウドに記録できます。</p>
         </div>
 
-        <!-- Footer -->
         <div class="bg-slate-50 p-6 border-t flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div class="text-sm text-slate-500 max-w-2xl">
-                <strong>診断コメント:</strong> 保存・読込機能により、複数のシミュレーションを切り替えて比較できます。各家庭の将来計画にお役立てください。
+                <strong>診断コメント:</strong> クラウド保存に対応しました。各プランの保存・読込が可能です。
             </div>
             <button onclick="window.print()" class="no-print bg-slate-800 hover:bg-black text-white px-8 py-3 rounded-lg font-bold shadow-lg transition">
                 印刷 / PDF保存
@@ -171,8 +166,7 @@
     <div id="saveModal" class="modal-backdrop">
         <div class="modal-content">
             <h2 class="text-xl font-bold mb-4">プランを保存する</h2>
-            <p class="text-sm text-slate-500 mb-4">保存する名前（顧客名など）を入力してください。</p>
-            <input type="text" id="saveNameInput" class="w-full border p-3 rounded mb-6 text-lg" placeholder="例：田中様プラン">
+            <input type="text" id="saveNameInput" class="w-full border p-3 rounded mb-6 text-lg focus:border-blue-500 outline-none" placeholder="例：〇〇様プランA">
             <div class="flex justify-end gap-3">
                 <button onclick="closeModal('saveModal')" class="px-4 py-2 text-slate-500 font-bold">キャンセル</button>
                 <button id="saveBtn" onclick="savePlan()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded font-bold shadow">保存実行</button>
@@ -183,9 +177,7 @@
     <div id="loadModal" class="modal-backdrop">
         <div class="modal-content">
             <h2 class="text-xl font-bold mb-4">プランを読み込む</h2>
-            <div id="planList" class="space-y-2 mb-6 max-h-64 overflow-y-auto border-t pt-4">
-                <p class="text-slate-400 italic">読込中...</p>
-            </div>
+            <div id="planList" class="space-y-2 mb-6 max-h-64 overflow-y-auto border-t pt-4 text-sm"></div>
             <div class="flex justify-end">
                 <button onclick="closeModal('loadModal')" class="px-4 py-2 text-slate-500 font-bold border rounded">閉じる</button>
             </div>
@@ -195,36 +187,39 @@
     <!-- Firebase SDK Implementation -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, getDoc, getDocs, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        let db, auth, appId;
-        let currentUser = null;
+        // Firebase Configuration (Provided by User)
+        const firebaseConfig = {
+            apiKey: "AIzaSyDr8lWJp-dHftPPBNvlke28r5-NdUyngnI",
+            authDomain: "my-cashflow-sim.firebaseapp.com",
+            projectId: "my-cashflow-sim",
+            storageBucket: "my-cashflow-sim.firebasestorage.app",
+            messagingSenderId: "520084319258",
+            appId: "1:520084319258:web:747fc1c64302b2ace935a3",
+            measurementId: "G-200LZFT53K"
+        };
+
+        const appId = "cashflow-sim-storage";
+        let db, auth, currentUser = null;
 
         const setupFirebase = async () => {
             try {
-                const firebaseConfig = JSON.parse(__firebase_config);
                 const app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
                 db = getFirestore(app);
-                appId = typeof __app_id !== 'undefined' ? __app_id : 'cashflow-sim-default';
-
-                // Rule 3: Auth First
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-
+                
                 onAuthStateChanged(auth, (user) => {
                     currentUser = user;
                 });
+
+                await signInAnonymously(auth);
             } catch (err) {
-                console.error("Firebase setup error:", err);
+                console.error("Firebase setup failed:", err);
             }
         };
 
-        // Define Global Functions in Window
         window.savePlan = async () => {
             if (!currentUser) {
                 alert("認証中です。数秒待ってから再度お試しください。");
@@ -232,10 +227,7 @@
             }
 
             const name = document.getElementById('saveNameInput').value.trim();
-            if (!name) {
-                alert("名前を入力してください。");
-                return;
-            }
+            if (!name) { alert("保存する名前を入力してください。"); return; }
 
             const saveBtn = document.getElementById('saveBtn');
             saveBtn.disabled = true;
@@ -254,29 +246,24 @@
                         duration: document.getElementById('duration').value
                     },
                     incomes: Array.from(document.querySelectorAll('.income-input')).map(el => ({
-                        cat: el.dataset.cat,
-                        col: el.dataset.col,
-                        val: el.value
+                        cat: el.dataset.cat, col: el.dataset.col, val: el.value
                     })),
                     expenses: Array.from(document.querySelectorAll('.expense-input')).map(el => ({
-                        cat: el.dataset.cat,
-                        col: el.dataset.col,
-                        val: el.value
+                        cat: el.dataset.cat, col: el.dataset.col, val: el.value
                     })),
                     memos: Array.from(document.querySelectorAll('.memo-input')).map(el => el.value)
                 };
 
-                // ID safe naming
                 const safeId = encodeURIComponent(name).replace(/%/g, '_');
                 const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'scenarios', safeId);
                 await setDoc(docRef, data);
-
-                alert(`${name} として保存しました。`);
+                
+                alert(`${name} を保存しました。`);
                 document.getElementById('displayClientName').textContent = name;
                 closeModal('saveModal');
             } catch (err) {
-                console.error("Save error:", err);
-                alert("保存中にエラーが発生しました。");
+                console.error(err);
+                alert("保存に失敗しました。ルールの設定を確認してください。");
             } finally {
                 saveBtn.disabled = false;
                 saveBtn.textContent = "保存実行";
@@ -285,8 +272,12 @@
 
         window.loadPlansList = async () => {
             const listArea = document.getElementById('planList');
-            listArea.innerHTML = '<p class="text-slate-400 italic">プランを取得中...</p>';
-            if (!currentUser) return;
+            listArea.innerHTML = '<p class="text-slate-400 italic">読込中...</p>';
+            
+            if (!currentUser) {
+                listArea.innerHTML = '<p class="text-rose-500">認証エラー</p>';
+                return;
+            }
 
             try {
                 const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'scenarios');
@@ -298,25 +289,22 @@
                 }
 
                 listArea.innerHTML = '';
-                snap.forEach((d) => {
-                    const plan = d.data();
+                snap.forEach(d => {
+                    const p = d.data();
                     const item = document.createElement('div');
-                    item.className = "flex justify-between items-center p-3 border rounded-lg hover:bg-slate-50 transition";
-                    item.innerHTML = `
-                        <button onclick="window.fetchAndLoadPlan('${d.id}')" class="flex-grow text-left font-bold text-blue-600 truncate mr-2">${plan.name}</button>
-                        <button onclick="window.deletePlan('${d.id}')" class="text-rose-500 text-xs px-2 py-1 border border-rose-100 rounded hover:bg-rose-50">削除</button>
-                    `;
+                    item.className = "flex justify-between items-center p-3 border rounded-lg mb-2 hover:bg-slate-50";
+                    item.innerHTML = `<button onclick="window.fetchAndLoadPlan('${d.id}')" class="font-bold text-blue-600 truncate flex-grow text-left">${p.name}</button>
+                                      <button onclick="window.deletePlan('${d.id}')" class="text-rose-500 text-xs px-2 py-1 border border-rose-100 rounded ml-2">削除</button>`;
                     listArea.appendChild(item);
                 });
             } catch (err) {
-                listArea.innerHTML = '<p class="text-rose-500">リスト取得エラー</p>';
+                listArea.innerHTML = '<p class="text-rose-500">リスト取得に失敗しました。</p>';
             }
         };
 
         window.fetchAndLoadPlan = async (id) => {
             try {
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'scenarios', id);
-                const snap = await getDoc(docRef);
+                const snap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'scenarios', id));
                 if (!snap.exists()) return;
                 const p = snap.data();
 
@@ -342,206 +330,100 @@
                 document.getElementById('displayClientName').textContent = p.name;
                 window.updateSimulation();
                 closeModal('loadModal');
-            } catch (err) {
-                alert("読み込みに失敗しました。");
-            }
+                alert(`${p.name} を読み込みました。`);
+            } catch (err) { alert("読込エラー"); }
         };
 
         window.deletePlan = async (id) => {
-            if (!confirm("このプランを完全に削除しますか？")) return;
-            try {
-                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'scenarios', id));
-                window.loadPlansList();
-            } catch (err) {
-                alert("削除エラー");
+            if (confirm("完全に削除しますか？")) {
+                try {
+                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'scenarios', id));
+                    window.loadPlansList();
+                } catch (err) { alert("削除エラー"); }
             }
         };
 
-        // Kick off setup
         setupFirebase();
     </script>
 
     <script>
-        // Main Logic & UI
-        window.openModal = (id) => {
-            document.getElementById(id).style.display = 'flex';
-            if (id === 'loadModal') window.loadPlansList();
-        };
-        window.closeModal = (id) => {
-            document.getElementById(id).style.display = 'none';
-        };
-
-        let assetChart = null;
-        let balanceChart = null;
+        window.openModal = (id) => { document.getElementById(id).style.display = 'flex'; if (id === 'loadModal') window.loadPlansList(); };
+        window.closeModal = (id) => { document.getElementById(id).style.display = 'none'; };
+        
+        let assetChart, balanceChart;
         const intervals = [0, 5, 10, 15, 20, 25, 30];
         const expenseCats = [
-            {id:'basicLiving', label:'基本生活費', def:240},
-            {id:'housing', label:'住居関連費', def:120},
-            {id:'vehicle', label:'車両費', def:30},
-            {id:'education', label:'教育費', def:30},
-            {id:'insurance', label:'保険料', def:20},
-            {id:'other', label:'その他の支出', def:10},
-            {id:'temp', label:'一時的な支出', def:0}
+            {id:'basicLiving', label:'基本生活費', def:240}, {id:'housing', label:'住居関連費', def:120},
+            {id:'vehicle', label:'車両費', def:30}, {id:'education', label:'教育費', def:30},
+            {id:'insurance', label:'保険料', def:20}, {id:'other', label:'その他の支出', def:10}, {id:'temp', label:'一時的な支出', def:0}
         ];
 
         function initTable() {
             const tbody = document.getElementById('tableBody');
-            let html = '';
-
-            html += `<tr class="bg-amber-50/20" id="rowLifeEvent">
+            let html = `<tr class="bg-amber-50/20">
                 <td class="p-3 border-b sticky-col font-bold bg-amber-50/50">ライフイベント</td>
-                ${intervals.map(() => `<td class="p-2 border-b"><textarea class="memo-input" placeholder="予定など"></textarea></td>`).join('')}
+                ${intervals.map(() => `<td class="p-2 border-b"><textarea class="memo-input" placeholder="メモ"></textarea></td>`).join('')}
             </tr>`;
-
-            html += `<tr class="bg-slate-50/50" id="rowSelfAge">
-                <td class="p-3 border-b sticky-col font-bold bg-slate-50">本人年齢</td>
-                <td class="p-3 border-b bg-blue-50/30"><input type="number" id="baseAge" value="35" class="table-input" onchange="updateSimulation()"></td>
-                ${intervals.slice(1).map(() => `<td class="p-3 border-b text-center"></td>`).join('')}
-            </tr>`;
-
-            html += `<tr class="bg-slate-50/50" id="rowSpouseAge">
-                <td class="p-3 border-b sticky-col bg-slate-50">配偶者年齢</td>
-                <td class="p-3 border-b bg-blue-50/30"><input type="number" id="spouseAge" value="32" class="table-input" onchange="updateSimulation()"></td>
-                ${intervals.slice(1).map(() => `<td class="p-3 border-b text-center"></td>`).join('')}
-            </tr>`;
-
-            html += `<tr class="bg-slate-50/50 border-b-2" id="rowChildrenAge">
-                <td class="p-3 border-r sticky-col bg-slate-50 text-[10px]">子供の年齢</td>
-                <td class="p-3 border-b bg-blue-50/30">
-                    <div class="flex flex-col gap-1">
-                        <div class="flex items-center text-[9px]">1:<input type="number" id="child1Age" value="5" class="table-input ml-1" onchange="updateSimulation()"></div>
-                        <div class="flex items-center text-[9px]">2:<input type="number" id="child2Age" value="2" class="table-input ml-1" onchange="updateSimulation()"></div>
-                        <div class="flex items-center text-[9px]">3:<input type="number" id="child3Age" value="0" class="table-input ml-1" onchange="updateSimulation()"></div>
-                    </div>
-                </td>
-                ${intervals.slice(1).map(() => `<td class="p-3 border-b text-center text-[10px]"></td>`).join('')}
-            </tr>`;
-
-            html += `<tr class="bg-blue-100/30 font-bold">
-                <td class="p-3 border-b sticky-col bg-white">【収入合計】</td>
-                ${intervals.map((_, i) => `<td class="p-3 border-b text-center ${i===0?'bg-blue-100/50':''}" data-type="totalIncome" data-col="${i}">0</td>`).join('')}
-            </tr>`;
-            html += `<tr class="text-xs">
-                <td class="p-3 border-b sticky-col bg-white pl-6">本人収入</td>
-                ${intervals.map((_, i) => `<td class="p-2 border-b ${i===0?'bg-blue-50/20':''}"><input type="number" class="table-input income-input" data-cat="self" data-col="${i}" value="${[500,520,540,560,580,400,180][i]}" onchange="updateSimulation()"></td>`).join('')}
-            </tr>`;
-            html += `<tr class="text-xs border-b-2">
-                <td class="p-3 border-b sticky-col bg-white pl-6">配偶者収入</td>
-                ${intervals.map((_, i) => `<td class="p-2 border-b ${i===0?'bg-blue-50/20':''}"><input type="number" class="table-input income-input" data-cat="spouse" data-col="${i}" value="${[150,150,150,100,80,60,60][i]}" onchange="updateSimulation()"></td>`).join('')}
-            </tr>`;
-
-            html += `<tr class="bg-rose-100/30 font-bold">
-                <td class="p-3 border-b sticky-col bg-white text-rose-900">【支出合計】</td>
-                ${intervals.map((_, i) => `<td class="p-3 border-b text-center text-rose-700 ${i===0?'bg-blue-100/50':''}" data-type="totalExpense" data-col="${i}">0</td>`).join('')}
-            </tr>`;
+            html += `<tr class="bg-slate-50/50" id="rowSelfAge"><td class="p-3 border-b sticky-col font-bold bg-slate-50">本人年齢</td><td class="p-3 border-b bg-blue-50/30"><input type="number" id="baseAge" value="35" class="table-input" onchange="updateSimulation()"></td>${intervals.slice(1).map(() => `<td class="p-3 border-b text-center"></td>`).join('')}</tr>`;
+            html += `<tr class="bg-slate-50/50" id="rowSpouseAge"><td class="p-3 border-b sticky-col bg-slate-50">配偶者年齢</td><td class="p-3 border-b bg-blue-50/30"><input type="number" id="spouseAge" value="32" class="table-input" onchange="updateSimulation()"></td>${intervals.slice(1).map(() => `<td class="p-3 border-b text-center"></td>`).join('')}</tr>`;
+            html += `<tr class="bg-slate-50/50 border-b-2" id="rowChildrenAge"><td class="p-3 border-r sticky-col bg-slate-50 text-[10px]">子供の年齢</td><td class="p-3 border-b bg-blue-50/30 text-center"><div class="flex flex-col gap-1">1:<input type="number" id="child1Age" value="5" class="table-input ml-1" onchange="updateSimulation()">2:<input type="number" id="child2Age" value="2" class="table-input ml-1" onchange="updateSimulation()">3:<input type="number" id="child3Age" value="0" class="table-input ml-1" onchange="updateSimulation()"></div></td>${intervals.slice(1).map(() => `<td class="p-3 border-b text-center text-[10px]"></td>`).join('')}</tr>`;
+            html += `<tr class="bg-blue-100/30 font-bold"><td class="p-3 border-b sticky-col bg-white">【収入合計】</td>${intervals.map((_, i) => `<td class="p-3 border-b text-center" data-type="totalIncome" data-col="${i}">0</td>`).join('')}</tr>`;
+            html += `<tr class="text-xs"><td class="p-3 border-b sticky-col bg-white pl-6">本人収入</td>${intervals.map((_, i) => `<td class="p-2 border-b"><input type="number" class="table-input income-input" data-cat="self" data-col="${i}" value="${[500,520,540,560,580,400,180][i]}" onchange="updateSimulation()"></td>`).join('')}</tr>`;
+            html += `<tr class="text-xs border-b-2"><td class="p-3 border-b sticky-col bg-white pl-6">配偶者収入</td>${intervals.map((_, i) => `<td class="p-2 border-b"><input type="number" class="table-input income-input" data-cat="spouse" data-col="${i}" value="${[150,150,150,100,80,60,60][i]}" onchange="updateSimulation()"></td>`).join('')}</tr>`;
+            html += `<tr class="bg-rose-100/30 font-bold"><td class="p-3 border-b sticky-col bg-white text-rose-900">【支出合計】</td>${intervals.map((_, i) => `<td class="p-3 border-b text-center text-rose-700" data-type="totalExpense" data-col="${i}">0</td>`).join('')}</tr>`;
             expenseCats.forEach((cat, idx) => {
-                html += `<tr class="text-xs ${idx === expenseCats.length-1 ? 'border-b-2' : ''}">
-                    <td class="p-2 border-b sticky-col bg-white pl-6">${cat.label}</td>
-                    ${intervals.map((_, i) => `<td class="p-1 border-b ${i===0?'bg-blue-50/20':''}"><input type="number" class="table-input expense-input" data-cat="${cat.id}" data-col="${i}" value="${cat.def}" onchange="updateSimulation()"></td>`).join('')}
-                </tr>`;
+                html += `<tr class="text-xs ${idx === expenseCats.length-1 ? 'border-b-2' : ''}"><td class="p-2 border-b sticky-col bg-white pl-6">${cat.label}</td>${intervals.map((_, i) => `<td class="p-1 border-b"><input type="number" class="table-input expense-input" data-cat="${cat.id}" data-col="${i}" value="${cat.def}" onchange="updateSimulation()"></td>`).join('')}</tr>`;
             });
-
-            html += `<tr class="bg-slate-50 font-bold">
-                <td class="p-3 border-b sticky-col bg-slate-50">【年間収支】</td>
-                ${intervals.map((_, i) => `<td class="p-3 border-b text-center ${i===0?'bg-blue-100/50':''}" data-type="balance" data-col="${i}">0</td>`).join('')}
-            </tr>`;
-            html += `<tr class="bg-emerald-50 text-emerald-800 font-bold">
-                <td class="p-3 border-b sticky-col bg-emerald-50">【金融資産残高】</td>
-                ${intervals.map((_, i) => `<td class="p-3 text-center ${i===0?'bg-emerald-100/50':''}" data-type="assets" data-col="${i}">0</td>`).join('')}
-            </tr>`;
-
+            html += `<tr class="bg-slate-50 font-bold"><td class="p-3 border-b sticky-col bg-slate-50">【年間収支】</td>${intervals.map((_, i) => `<td class="p-3 border-b text-center" data-type="balance" data-col="${i}">0</td>`).join('')}</tr>`;
+            html += `<tr class="bg-emerald-50 text-emerald-800 font-bold"><td class="p-3 border-b sticky-col bg-emerald-50">【金融資産残高】</td>${intervals.map((_, i) => `<td class="p-3 text-center" data-type="assets" data-col="${i}">0</td>`).join('')}</tr>`;
             tbody.innerHTML = html;
             updateSimulation();
         }
 
         window.updateSimulation = () => {
             const baseAge = parseInt(document.getElementById('baseAge').value || 0);
-            const duration = parseInt(document.getElementById('duration').value || 0);
             const spouseAge = parseInt(document.getElementById('spouseAge').value || 0);
             const child1 = parseInt(document.getElementById('child1Age').value || 0);
             const child2 = parseInt(document.getElementById('child2Age').value || 0);
             const child3 = parseInt(document.getElementById('child3Age').value || 0);
-
-            document.getElementById('summaryDuration').textContent = `${baseAge}歳 〜 ${baseAge + duration}歳`;
-
+            document.getElementById('summaryDuration').textContent = `${baseAge}歳 〜 ${baseAge + parseInt(document.getElementById('duration').value)}歳`;
             const selfRow = document.getElementById('rowSelfAge');
             const spouseRow = document.getElementById('rowSpouseAge');
             const childRow = document.getElementById('rowChildrenAge');
-
             intervals.forEach((offset, i) => {
                 if (i === 0) return;
-                if(selfRow.cells[i+1]) selfRow.cells[i+1].textContent = `${baseAge + offset}歳`;
-                if(spouseRow.cells[i+1]) spouseRow.cells[i+1].textContent = `${spouseAge + offset}歳`;
-                if(childRow.cells[i+1]) childRow.cells[i+1].innerHTML = `子1:${child1+offset}<br>子2:${child2+offset}<br>子3:${child3+offset}`;
+                selfRow.cells[i+1].textContent = `${baseAge + offset}歳`;
+                spouseRow.cells[i+1].textContent = `${spouseAge + offset}歳`;
+                childRow.cells[i+1].innerHTML = `子1:${child1+offset}<br>子2:${child2+offset}<br>子3:${child3+offset}`;
             });
-
-            const columnData = [];
             let runningAssets = 800;
-
             for (let col = 0; col < intervals.length; col++) {
-                let totalInc = 0;
-                document.querySelectorAll(`.income-input[data-col="${col}"]`).forEach(el => totalInc += parseInt(el.value || 0));
+                let totalInc = 0; document.querySelectorAll(`.income-input[data-col="${col}"]`).forEach(el => totalInc += parseInt(el.value || 0));
                 document.querySelector(`[data-type="totalIncome"][data-col="${col}"]`).textContent = totalInc;
-
-                let totalExp = 0;
-                document.querySelectorAll(`.expense-input[data-col="${col}"]`).forEach(el => totalExp += parseInt(el.value || 0));
+                let totalExp = 0; document.querySelectorAll(`.expense-input[data-col="${col}"]`).forEach(el => totalExp += parseInt(el.value || 0));
                 document.querySelector(`[data-type="totalExpense"][data-col="${col}"]`).textContent = totalExp;
-
                 const bal = totalInc - totalExp;
                 const balEl = document.querySelector(`[data-type="balance"][data-col="${col}"]`);
                 balEl.textContent = (bal >= 0 ? "+" : "") + bal;
-                balEl.className = `p-3 border-b text-center font-bold ${bal >= 0 ? "positive" : "negative"} ${col===0?'bg-blue-100/50':''}`;
-
+                balEl.className = `p-3 border-b text-center font-bold ${bal >= 0 ? "positive" : "negative"}`;
                 if (col > 0) runningAssets += (bal * 5);
                 const assetEl = document.querySelector(`[data-type="assets"][data-col="${col}"]`);
                 assetEl.textContent = Math.max(0, runningAssets).toLocaleString();
-                assetEl.className = `p-3 text-center font-bold ${runningAssets >= 0 ? "text-emerald-700" : "text-rose-700"} ${col===0?'bg-emerald-100/50':''}`;
-
                 if (col === 0) document.getElementById('summaryBalance').textContent = `¥${bal.toLocaleString()},000`;
-                columnData.push({ age: baseAge + intervals[col], income: totalInc, expense: totalExp, assets: runningAssets });
             }
-
-            renderCharts(columnData, baseAge, duration);
+            renderCharts(baseAge);
         };
 
-        function renderCharts(data, baseAge, duration) {
-            const labels = data.map(d => `${d.age}歳`);
-            const assetVals = data.map(d => Math.max(0, d.assets));
-            const incomeVals = data.map(d => d.income);
-            const expenseVals = data.map(d => d.expense);
-
+        function renderCharts(baseAge) {
+            const labels = intervals.map(o => `${baseAge+o}歳`);
+            const incomes = Array.from(document.querySelectorAll('[data-type="totalIncome"]')).map(el => parseInt(el.textContent));
+            const expenses = Array.from(document.querySelectorAll('[data-type="totalExpense"]')).map(el => parseInt(el.textContent));
+            const assets = Array.from(document.querySelectorAll('[data-type="assets"]')).map(el => parseInt(el.textContent.replace(/,/g,'')));
             if (assetChart) assetChart.destroy();
-            const assetCtx = document.getElementById('assetChart').getContext('2d');
-            assetChart = new Chart(assetCtx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: '金融資産残高',
-                        data: assetVals,
-                        borderColor: '#3b82f6',
-                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                        fill: true, tension: 0.4, pointRadius: 4
-                    }]
-                },
-                options: { maintainAspectRatio: false, plugins: { legend: { display: false } } }
-            });
-
+            assetChart = new Chart(document.getElementById('assetChart').getContext('2d'), { type: 'line', data: { labels, datasets: [{ label: '金融資産', data: assets, borderColor: '#3b82f6', fill: true }] }, options: { maintainAspectRatio: false, plugins: { legend: { display: false } } } });
             if (balanceChart) balanceChart.destroy();
-            const balanceCtx = document.getElementById('balanceChart').getContext('2d');
-            balanceChart = new Chart(balanceCtx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        { label: '収入', data: incomeVals, backgroundColor: '#93c5fd' },
-                        { label: '支出', data: expenseVals, backgroundColor: '#fca5a5' }
-                    ]
-                },
-                options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
-            });
+            balanceChart = new Chart(document.getElementById('balanceChart').getContext('2d'), { type: 'bar', data: { labels, datasets: [ { label: '収入', data: incomes, backgroundColor: '#93c5fd' }, { label: '支出', data: expenses, backgroundColor: '#fca5a5' } ] }, options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } });
         }
-
         document.addEventListener('DOMContentLoaded', initTable);
     </script>
 </body>
