@@ -136,7 +136,7 @@
             </div>
             <div class="flex gap-3 no-print">
                 <button onclick="openModal('loadModal')" class="bg-white/10 hover:bg-white/20 text-white text-xs px-4 py-2 rounded-lg transition border border-white/30">読込</button>
-                <button onclick="openModal('saveModal')" class="bg-emerald-600 hover:bg-emerald-50 text-white text-xs px-6 py-2 rounded-lg font-bold shadow-lg transition">保存</button>
+                <button onclick="openModal('saveModal')" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-6 py-2 rounded-lg font-bold shadow-lg transition">保存</button>
             </div>
         </div>
 
@@ -150,7 +150,12 @@
             <div class="flex bg-white rounded-xl p-1 shadow-sm border items-center">
                 <span class="text-[10px] px-3 text-slate-400 font-bold uppercase border-r mr-1">グラフ形式</span>
                 <button id="chartLine" onclick="setChartType('line')" class="toggle-btn active px-4 py-1.5 text-xs rounded-lg transition font-medium">資産推移</button>
-                <button id="chartPie" onclick="setChartType('pie')" class="toggle-btn px-4 py-1.5 text-xs rounded-lg transition font-medium">収支構成</button>
+                <button id="chartPie" onclick="setChartType('pie')" class="toggle-btn px-4 py-1.5 text-xs rounded-lg transition font-medium">全収支構成</button>
+            </div>
+            <div id="pieYearSelectorWrapper" class="hidden flex bg-white rounded-xl p-1 shadow-sm border items-center transition-all duration-300 animate-in fade-in">
+                <span class="text-[10px] px-3 text-slate-400 font-bold uppercase border-r mr-1">参照年</span>
+                <select id="chartYearSelector" onchange="updateSimulation()" class="text-xs px-4 py-1.5 rounded-lg border-none outline-none font-medium bg-transparent">
+                </select>
             </div>
             <div class="ml-auto">
                 <button onclick="openModal('configModal')" class="bg-[#002D5B] text-white px-5 py-2 rounded-xl text-xs font-bold hover:bg-slate-800 transition shadow-lg flex items-center">
@@ -162,25 +167,13 @@
         <div class="p-4 md:p-8">
             <!-- Summary -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-10">
-                <div class="bg-slate-50 border-l-4 border-[#002D5B] p-5 rounded-r-xl shadow-sm">
-                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">シミュレーション期間</p>
-                    <p class="text-xl font-bold text-slate-700" id="summaryDuration">---</p>
-                </div>
-                <div class="bg-slate-50 border-l-4 border-emerald-600 p-5 rounded-r-xl shadow-sm">
-                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">土地建物総額</p>
-                    <p class="text-xl font-bold text-slate-700" id="summaryProperty">¥0</p>
-                </div>
-                <div class="bg-slate-50 border-l-4 border-amber-500 p-5 rounded-r-xl shadow-sm">
-                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">運用期待利回り</p>
-                    <p class="text-xl font-bold text-slate-700" id="summaryYield">0%</p>
-                </div>
-                <div class="bg-slate-50 border-l-4 border-rose-600 p-5 rounded-r-xl shadow-sm">
-                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">ローン借入総額</p>
-                    <p class="text-xl font-bold text-slate-700" id="summaryLoan">¥0</p>
-                </div>
+                <div class="bg-slate-50 border-l-4 border-[#002D5B] p-5 rounded-r-xl shadow-sm"><p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">シミュレーション期間</p><p class="text-xl font-bold text-slate-700" id="summaryDuration">---</p></div>
+                <div class="bg-slate-50 border-l-4 border-emerald-600 p-5 rounded-r-xl shadow-sm"><p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">土地建物総額</p><p class="text-xl font-bold text-slate-700" id="summaryProperty">¥0</p></div>
+                <div class="bg-slate-50 border-l-4 border-amber-500 p-5 rounded-r-xl shadow-sm"><p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">運用期待利回り</p><p class="text-xl font-bold text-slate-700" id="summaryYield">0%</p></div>
+                <div class="bg-slate-50 border-l-4 border-rose-600 p-5 rounded-r-xl shadow-sm"><p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">ローン借入総額</p><p class="text-xl font-bold text-slate-700" id="summaryLoan">¥0</p></div>
             </div>
 
-            <!-- Chart -->
+            <!-- Chart Section -->
             <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm mb-12">
                 <h3 id="chartTitle" class="text-sm font-bold text-slate-600 flex items-center mb-6">
                     <span class="w-1.5 h-4 bg-[#002D5B] mr-2 rounded-full"></span>
@@ -195,18 +188,16 @@
             <div class="overflow-x-auto border border-slate-200 rounded-2xl shadow-xl bg-white">
                 <table class="w-full text-left border-collapse text-xs md:text-sm" id="cfTable">
                     <thead id="tableHeader"></thead>
-                    <tbody id="tableBody" class="font-medium"></tbody>
+                    <tbody id="tableBody" class="font-medium text-slate-600"></tbody>
                 </table>
             </div>
         </div>
 
         <div class="bg-slate-50 p-8 border-t flex flex-col md:flex-row justify-between items-center gap-6 no-print">
             <p class="text-xs text-slate-400 max-w-xl italic">
-                ※左側の入力列で年齢や人数を変更可能です。土地建物総額は購入年の支出として計上されます。
+                ※「現在」の数値を変更すると将来に自動計算されます。円グラフの色味は収入が青系、支出が赤系で表示されます。
             </p>
-            <button onclick="window.print()" class="bg-[#002D5B] text-white px-12 py-4 rounded-2xl font-bold shadow-2xl hover:scale-105 transition transform">
-                診断レポートをPDF保存
-            </button>
+            <button onclick="window.print()" class="bg-[#002D5B] text-white px-12 py-4 rounded-2xl font-bold shadow-2xl hover:scale-105 transition transform">診断レポートをPDF保存</button>
         </div>
     </div>
 
@@ -214,95 +205,49 @@
     <div id="configModal" class="modal-backdrop">
         <div class="modal-content">
             <h2 class="text-2xl font-bold mb-8 border-b pb-4 text-[#002D5B]">📝 詳細シミュレーション設定</h2>
-            
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                
                 <!-- 住宅ローン・土地建物 -->
                 <div class="space-y-6">
-                    <div class="bg-blue-50 p-6 rounded-2xl border border-blue-100">
+                    <div class="bg-blue-50 p-6 rounded-2xl border border-blue-100 shadow-inner">
                         <h3 class="font-bold text-blue-900 mb-4 flex items-center">🏠 土地建物・住宅ローン計画</h3>
                         <div class="space-y-4">
-                            <div>
-                                <label class="text-xs text-blue-800 font-bold block mb-1">土地建物総額 (万円)</label>
-                                <input type="number" id="propertyTotal" value="4500" class="w-full border border-blue-300 rounded-xl p-3 text-lg font-bold text-blue-900 focus:ring-2 focus:ring-blue-400 outline-none" onchange="updateSimulation()">
+                            <div><label class="text-xs text-blue-800 font-bold block mb-1">土地建物購入総額 (万円)</label><input type="number" id="propertyTotal" value="4500" class="w-full border border-blue-300 rounded-xl p-3 text-lg font-bold text-blue-900 outline-none" onchange="updateSimulation()"></div>
+                            <div class="grid grid-cols-2 gap-4 border-t border-blue-200 pt-4">
+                                <div><label class="text-[10px] text-blue-700 font-bold block mb-1">住宅ローン借入額 (万円)</label><input type="number" id="loanAmount" value="4000" class="w-full border border-blue-200 rounded-lg p-2 text-sm focus:border-blue-400" onchange="updateSimulation()"></div>
+                                <div><label class="text-[10px] text-blue-700 font-bold block mb-1">借入金利 (%)</label><input type="number" id="loanRate" value="1.0" step="0.1" class="w-full border border-blue-200 rounded-lg p-2 text-sm focus:border-blue-400" onchange="updateSimulation()"></div>
                             </div>
                             <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="text-[10px] text-blue-700 font-bold block mb-1">住宅ローン借入額 (万円)</label>
-                                    <input type="number" id="loanAmount" value="4000" class="w-full border border-blue-200 rounded-lg p-2 text-sm" onchange="updateSimulation()">
-                                </div>
-                                <div>
-                                    <label class="text-[10px] text-blue-700 font-bold block mb-1">借入金利 (%)</label>
-                                    <input type="number" id="loanRate" value="1.0" step="0.1" class="w-full border border-blue-200 rounded-lg p-2 text-sm" onchange="updateSimulation()">
-                                </div>
+                                <div><label class="text-[10px] text-blue-700 font-bold block mb-1">返済期間 (年)</label><input type="number" id="loanYears" value="35" class="w-full border border-blue-200 rounded-lg p-2 text-sm focus:border-blue-400" onchange="updateSimulation()"></div>
+                                <div><label class="text-[10px] text-blue-700 font-bold block mb-1">親からの援助金 (万円)</label><input type="number" id="parentSupport" value="0" class="w-full border border-blue-200 rounded-lg p-2 text-sm focus:border-blue-400" onchange="updateSimulation()"></div>
                             </div>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="text-[10px] text-blue-700 font-bold block mb-1">年間返済額 (万円)</label>
-                                    <input type="number" id="loanRepaymentYear" value="140" class="w-full border border-blue-200 rounded-lg p-2 text-sm" onchange="updateSimulation()">
-                                </div>
-                                <div>
-                                    <label class="text-[10px] text-blue-700 font-bold block mb-1">親からの援助金 (万円)</label>
-                                    <input type="number" id="parentSupport" value="0" class="w-full border border-blue-200 rounded-lg p-2 text-sm" onchange="updateSimulation()">
-                                </div>
+                            <div class="p-3 bg-white border border-blue-200 rounded-xl flex justify-between items-center shadow-sm">
+                                <span class="text-[10px] text-slate-500 font-bold">年間ローン返済額（自動試算）</span>
+                                <span class="text-blue-700 font-bold text-sm">¥<span id="calcLoanRepay">0</span>万 / 年</span>
                             </div>
                         </div>
                     </div>
-
-                    <!-- 隠し設定用 -->
-                    <div class="hidden">
-                        <input type="number" id="duration" value="50">
-                        <input type="number" id="baseAge" value="35">
-                        <input type="number" id="spouseAge" value="32">
-                        <select id="childCount"><option value="3" selected></option></select>
-                        <input type="number" id="child1Age" value="5">
-                        <input type="number" id="child2Age" value="2">
-                        <input type="number" id="child3Age" value="0">
-                    </div>
+                    <div class="hidden"><input type="number" id="duration" value="50"><input type="number" id="baseAge" value="35"><input type="number" id="spouseAge" value="32"><select id="childCount"><option value="3" selected></option></select><input type="number" id="child1Age" value="5"><input type="number" id="child2Age" value="2"><input type="number" id="child3Age" value="0"></div>
                 </div>
-
-                <!-- 資産運用・DC -->
+                <!-- 資産運用 -->
                 <div class="space-y-6">
-                    <div class="bg-emerald-50 p-6 rounded-2xl border border-emerald-100">
-                        <h3 class="font-bold text-emerald-900 mb-4 flex items-center">📈 資産運用・複利設定</h3>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="text-[10px] text-emerald-700 font-bold block mb-1">運用予想利回り (%)</label>
-                                <input type="number" id="investRate" value="3.0" step="0.1" class="w-full border border-emerald-200 rounded-lg p-2 text-sm" onchange="updateSimulation()">
-                            </div>
-                            <div>
-                                <label class="text-[10px] text-emerald-700 font-bold block mb-1">企業型DC拠出額 / 年 (万)</label>
-                                <input type="number" id="dcYearly" value="24" class="w-full border border-emerald-200 rounded-lg p-2 text-sm" onchange="updateSimulation()">
-                            </div>
-                        </div>
-                        <div class="mt-6">
-                            <label class="text-xs font-bold text-emerald-800 block mb-3">現在の資産残高（シミュレーション開始時）</label>
-                            <div class="grid grid-cols-3 gap-2">
-                                <div>
-                                    <label class="text-[9px] text-emerald-600 block">現金・預金 (万)</label>
-                                    <input type="number" id="currentCash" value="1000" class="w-full border border-emerald-200 rounded p-2 text-sm" onchange="updateSimulation()">
-                                </div>
-                                <div>
-                                    <label class="text-[9px] text-emerald-600 block">投資資産 (万)</label>
-                                    <input type="number" id="currentInvest" value="300" class="w-full border border-emerald-200 rounded p-2 text-sm" onchange="updateSimulation()">
-                                </div>
-                                <div>
-                                    <label class="text-[9px] text-emerald-600 block">企業型DC (万)</label>
-                                    <input type="number" id="currentDC" value="50" class="w-full border border-emerald-200 rounded p-2 text-sm" onchange="updateSimulation()">
-                                </div>
+                    <div class="bg-emerald-50 p-6 rounded-2xl border border-emerald-100 shadow-inner">
+                        <h3 class="font-bold text-emerald-900 mb-4 flex items-center">📈 資産運用・初期残高設定</h3>
+                        <div><label class="text-[10px] text-emerald-700 font-bold block mb-1">運用予想利回り (%)</label><input type="number" id="investRate" value="3.0" step="0.1" class="w-full border border-emerald-200 rounded-lg p-2 text-sm onchange="updateSimulation()"></div>
+                        <div class="mt-8">
+                            <label class="text-xs font-bold text-emerald-800 block mb-3">開始時の手持ち資産</label>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div><label class="text-[9px] text-emerald-600 block mb-1">現金・預貯金 (万)</label><input type="number" id="currentCash" value="1000" class="w-full border border-emerald-200 rounded p-2 text-sm" onchange="syncTableFromModal('currentCash_T', this.value); updateSimulation();"></div>
+                                <div><label class="text-[9px] text-emerald-600 block mb-1">投資資産 (万)</label><input type="number" id="currentInvest" value="300" class="w-full border border-emerald-200 rounded p-2 text-sm" onchange="syncTableFromModal('currentInvest_T', this.value); updateSimulation();"></div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <div class="mt-10 pt-6 border-t flex justify-end">
-                <button onclick="closeModal('configModal'); updateSimulation();" class="bg-[#002D5B] text-white px-16 py-3 rounded-2xl font-bold shadow-xl">設定を保存して反映</button>
-            </div>
+            <div class="mt-10 pt-6 border-t flex justify-end"><button onclick="closeModal('configModal'); updateSimulation();" class="bg-[#002D5B] text-white px-16 py-3 rounded-2xl font-bold shadow-xl hover:bg-slate-800 transition">反映する</button></div>
         </div>
     </div>
 
-    <!-- モーダル（保存・読込） -->
+    <!-- モーダル（共通） -->
     <div id="saveModal" class="modal-backdrop"><div class="modal-content text-center"><h2 class="text-xl font-bold mb-6">現在のプランを保存</h2><input type="text" id="saveNameInput" class="w-full border-2 border-slate-100 p-4 rounded-xl mb-6 text-lg" placeholder="例：林様 2025年案"><div class="flex justify-center gap-3"><button onclick="closeModal('saveModal')" class="px-8 py-2 text-slate-400">閉じる</button><button id="saveBtn" onclick="savePlan()" class="bg-[#002D5B] text-white px-10 py-2 rounded-xl font-bold shadow-lg">保存</button></div></div></div>
     <div id="loadModal" class="modal-backdrop"><div class="modal-content"><h2 class="text-xl font-bold mb-6">保存済みプラン</h2><div id="planList" class="space-y-3 mb-6 max-h-96 overflow-y-auto border-t pt-4"></div><div class="flex justify-end"><button onclick="closeModal('loadModal')" class="px-6 py-2 text-slate-400">閉じる</button></div></div></div>
 
@@ -311,206 +256,128 @@
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, getDoc, getDocs, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyDr8lWJp-dHftPPBNvlke28r5-NdUyngnI",
-            authDomain: "my-cashflow-sim.firebaseapp.com",
-            projectId: "my-cashflow-sim",
-            storageBucket: "my-cashflow-sim.firebasestorage.app",
-            messagingSenderId: "520084319258",
-            appId: "1:520084319258:web:747fc1c64302b2ace935a3",
-            measurementId: "G-200LZFT53K"
-        };
-
-        const appId = "cashflow-sim-storage";
-        let db, auth, currentUser = null;
-
-        const setupFirebase = async () => {
-            try {
-                const app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                db = getFirestore(app);
-                onAuthStateChanged(auth, (user) => { currentUser = user; });
-                await signInAnonymously(auth);
-            } catch (err) { console.error("Firebase Auth Error:", err); }
-        };
+        const firebaseConfig = { apiKey: "AIzaSyDr8lWJp-dHftPPBNvlke28r5-NdUyngnI", authDomain: "my-cashflow-sim.firebaseapp.com", projectId: "my-cashflow-sim", storageBucket: "my-cashflow-sim.firebasestorage.app", messagingSenderId: "520084319258", appId: "1:520084319258:web:747fc1c64302b2ace935a3", measurementId: "G-200LZFT53K" };
+        const appId = "cashflow-sim-storage"; let db, auth, currentUser = null;
+        const app = initializeApp(firebaseConfig); auth = getAuth(app); db = getFirestore(app);
+        onAuthStateChanged(auth, (u) => { currentUser = u; }); signInAnonymously(auth);
 
         window.savePlan = async () => {
             if (!currentUser) return;
             const name = document.getElementById('saveNameInput').value.trim();
             if (!name) return;
-            const btn = document.getElementById('saveBtn');
-            btn.disabled = true;
+            const btn = document.getElementById('saveBtn'); btn.disabled = true;
             try {
-                const configIds = [
-                    'duration', 'baseAge', 'spouseAge', 'childCount', 'child1Age', 'child2Age', 'child3Age',
-                    'propertyTotal', 'currentCash', 'currentInvest', 'currentDC',
-                    'loanAmount', 'loanRate', 'loanRepaymentYear', 'investRate', 'dcYearly', 'parentSupport'
-                ];
-                const config = {};
-                configIds.forEach(id => { config[id] = document.getElementById(id).value; });
-
-                const data = {
-                    name, config, updatedAt: serverTimestamp(),
-                    incomes: Array.from(document.querySelectorAll('.income-input')).map(el => ({ cat: el.dataset.cat, col: el.dataset.col, val: el.value })),
-                    expenses: Array.from(document.querySelectorAll('.expense-input')).map(el => ({ cat: el.dataset.cat, col: el.dataset.col, val: el.value })),
-                    memos: Array.from(document.querySelectorAll('.memo-input')).map(el => el.value)
-                };
+                const configIds = ['duration', 'baseAge', 'spouseAge', 'childCount', 'child1Age', 'child2Age', 'child3Age', 'propertyTotal', 'currentCash', 'currentInvest', 'loanAmount', 'loanRate', 'loanYears', 'investRate', 'parentSupport'];
+                const config = {}; configIds.forEach(id => { const el = document.getElementById(id); if(el) config[id] = el.value; });
+                const data = { name, config, updatedAt: serverTimestamp(), incomes: Array.from(document.querySelectorAll('.income-input')).map(el => ({ cat: el.dataset.cat, col: el.dataset.col, val: el.value })), expenses: Array.from(document.querySelectorAll('.expense-input')).map(el => ({ cat: el.dataset.cat, col: el.dataset.col, val: el.value })), memos: Array.from(document.querySelectorAll('.memo-input')).map(el => el.value) };
                 await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'scenarios', encodeURIComponent(name)), data);
-                alert("保存しました"); closeModal('saveModal');
-                document.querySelectorAll('.clientNameLabel').forEach(el => el.textContent = name);
+                alert("保存完了"); closeModal('saveModal'); updateClientLabel(name);
             } catch (err) { alert("保存失敗"); } finally { btn.disabled = false; }
         };
-
         window.loadPlansList = async () => {
-            const listArea = document.getElementById('planList');
-            if(!listArea) return;
-            listArea.innerHTML = '読込中...';
-            if (!currentUser) return;
+            const listArea = document.getElementById('planList'); if(!listArea) return;
+            listArea.innerHTML = '読込中...'; if (!currentUser) return;
             try {
                 const snap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'scenarios'));
                 listArea.innerHTML = snap.empty ? 'データなし' : '';
                 snap.forEach(d => {
-                    const p = d.data();
-                    const item = document.createElement('div');
+                    const p = d.data(); const item = document.createElement('div');
                     item.className = "flex justify-between items-center p-4 border rounded-xl hover:bg-blue-50 cursor-pointer mb-2";
                     item.innerHTML = `<div class="flex-grow" onclick="window.fetchAndLoadPlan('${d.id}')"><b>${p.name}</b></div><button onclick="window.deletePlan('${d.id}')" class="text-rose-500 text-xs">削除</button>`;
                     listArea.appendChild(item);
                 });
             } catch (err) { listArea.innerHTML = 'エラー'; }
         };
-
         window.fetchAndLoadPlan = async (id) => {
-            try {
-                const snap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'scenarios', id));
-                if (!snap.exists()) return;
-                const p = snap.data();
-                Object.keys(p.config).forEach(k => { const el = document.getElementById(k); if(el) el.value = p.config[k]; });
-                initTable();
-                p.incomes.forEach(i => { const el = document.querySelector(`.income-input[data-cat="${i.cat}"][data-col="${i.col}"]`); if (el) el.value = i.val; });
-                p.expenses.forEach(e => { const el = document.querySelector(`.expense-input[data-cat="${e.cat}"][data-col="${e.col}"]`); if (el) el.value = e.val; });
-                const memos = document.querySelectorAll('.memo-input');
-                p.memos.forEach((txt, idx) => { if (memos[idx]) memos[idx].value = txt; });
-                document.querySelectorAll('.clientNameLabel').forEach(el => el.textContent = p.name);
-                window.updateSimulation(); closeModal('loadModal');
-            } catch (err) { alert("読込失敗"); }
+            const snap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'scenarios', id));
+            if (!snap.exists()) return;
+            const p = snap.data(); Object.keys(p.config).forEach(k => { const el = document.getElementById(k); if(el) el.value = p.config[k]; });
+            initTable();
+            p.incomes.forEach(i => { const el = document.querySelector(`.income-input[data-cat="${i.cat}"][data-col="${i.col}"]`); if (el) el.value = i.val; });
+            p.expenses.forEach(e => { const el = document.querySelector(`.expense-input[data-cat="${e.cat}"][data-col="${e.col}"]`); if (el) el.value = e.val; });
+            const memos = document.querySelectorAll('.memo-input'); p.memos.forEach((txt, idx) => { if (memos[idx]) memos[idx].value = txt; });
+            updateClientLabel(p.name); updateSimulation(); closeModal('loadModal');
         };
-
         window.deletePlan = async (id) => { if (confirm("削除?")) { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'scenarios', id)); window.loadPlansList(); } };
-
-        setupFirebase();
+        function updateClientLabel(name) { document.querySelectorAll('.clientNameLabel').forEach(el => el.textContent = name); }
     </script>
 
     <script>
-        let mainChart;
-        let viewInterval = 5;
-        let chartType = 'line';
-        const expenseCats = [
-            {id:'basicLiving', label:'基本生活費', def:240}, {id:'housing', label:'住居関連費', def:120},
-            {id:'vehicle', label:'車両費', def:30}, {id:'education', label:'教育費', def:30},
-            {id:'insurance', label:'保険料', def:20}, {id:'other', label:'その他の支出', def:10}
-        ];
+        let mainChart; let viewInterval = 5; let chartType = 'line';
+        const expenseCats = [{id:'basicLiving', label:'基本生活費', def:240}, {id:'housing', label:'住居関連費', def:120}, {id:'vehicle', label:'車両費', def:30}, {id:'education', label:'教育費', def:30}, {id:'insurance', label:'保険料', def:20}, {id:'other', label:'その他の支出', def:10}];
 
-        function setViewInterval(val) {
-            viewInterval = val;
-            const v1 = document.getElementById('view1yr');
-            const v5 = document.getElementById('view5yr');
-            if(v1) v1.classList.toggle('active', val === 1);
-            if(v5) v5.classList.toggle('active', val === 5);
-            initTable();
-            updateSimulation();
-        }
-
-        function setChartType(type) {
-            chartType = type;
-            const cl = document.getElementById('chartLine');
-            const cp = document.getElementById('chartPie');
-            if(cl) cl.classList.toggle('active', type === 'line');
-            if(cp) cp.classList.toggle('active', type === 'pie');
-            updateSimulation();
+        function setViewInterval(val) { viewInterval = val; document.getElementById('view1yr').classList.toggle('active', val === 1); document.getElementById('view5yr').classList.toggle('active', val === 5); initTable(); updateSimulation(); }
+        function setChartType(type) { 
+            chartType = type; 
+            document.getElementById('chartLine').classList.toggle('active', type === 'line'); 
+            document.getElementById('chartPie').classList.toggle('active', type === 'pie');
+            const selector = document.getElementById('pieYearSelectorWrapper');
+            if(selector) selector.style.display = (type === 'pie') ? 'flex' : 'none';
+            updateSimulation(); 
         }
 
         function initTable() {
             const duration = parseInt(document.getElementById('duration')?.value || 50);
-            const columns = [];
-            for (let i = 0; i <= duration; i += viewInterval) columns.push(i);
+            const columns = []; for (let i = 0; i <= duration; i += viewInterval) columns.push(i);
+            
+            const yearSelector = document.getElementById('chartYearSelector');
+            if(yearSelector) {
+                const currentVal = yearSelector.value;
+                yearSelector.innerHTML = columns.map(c => `<option value="${c}">${c === 0 ? '現在' : c + '年後'}</option>`).join('');
+                if(columns.includes(parseInt(currentVal))) yearSelector.value = currentVal;
+            }
 
             const thead = document.getElementById('tableHeader');
-            thead.innerHTML = `<tr class="bg-slate-800 text-white shadow-md">
-                <th class="p-5 input-col text-slate-800">基本入力項目</th>
-                ${columns.map((c, i) => `<th class="p-5 text-center font-bold ${i===0?'bg-slate-700':''}">${c===0?'現在':c+'年後'}</th>`).join('')}
-            </tr>`;
-
+            thead.innerHTML = `<tr class="bg-slate-800 text-white shadow-md"><th class="p-5 input-col text-slate-800">基本入力項目</th>${columns.map((c, i) => `<th class="p-5 text-center font-bold ${i===0?'bg-slate-700':''}">${c===0?'現在':c+'年後'}</th>`).join('')}</tr>`;
             const tbody = document.getElementById('tableBody');
             let html = `<tr class="bg-amber-50/20"><td class="p-4 input-col font-bold text-amber-900 border-b text-[11px]">ライフイベント</td>${columns.map((_, i) => `<td class="p-2 border-b"><textarea class="memo-input event-memo" data-col="${i}" oninput="updateSimulation()" placeholder="メモ"></textarea></td>`).join('')}</tr>`;
-            
             html += `<tr class="bg-slate-50"><td class="p-4 input-col font-bold border-b text-slate-600 text-[11px]">経過年数 (年)<br><input type="number" id="duration_T" class="table-input mt-1" onchange="syncAndRefresh('duration', this.value); initTable();"></td>${columns.map((_, i) => `<td class="p-3 border-b text-center text-slate-400">${columns[i]}年</td>`).join('')}</tr>`;
-
             html += `<tr class="bg-slate-50/50"><td class="p-4 input-col font-bold border-b text-[11px]">本人年齢<br><input type="number" id="baseAge_T" class="table-input mt-1" onchange="syncAndRefresh('baseAge', this.value)"></td>${columns.map((_, i) => `<td class="p-3 border-b text-center font-bold text-slate-800" data-type="ageSelf" data-col="${i}">---</td>`).join('')}</tr>`;
             html += `<tr class="bg-slate-50/50"><td class="p-4 input-col font-bold border-b text-[11px]">配偶者年齢<br><input type="number" id="spouseAge_T" class="table-input mt-1" onchange="syncAndRefresh('spouseAge', this.value)"></td>${columns.map((_, i) => `<td class="p-3 border-b text-center text-slate-500" data-type="ageSpouse" data-col="${i}">---</td>`).join('')}</tr>`;
-            html += `<tr class="bg-slate-50/50 border-b-4"><td class="p-4 input-col font-bold text-[11px]">子供(数/年齢)<br>
-                <select id="childCount_T" class="table-input text-[10px] mb-1" onchange="syncAndRefresh('childCount', this.value)"><option value="0">0名</option><option value="1">1名</option><option value="2">2名</option><option value="3">3名</option></select>
-                <div class="flex gap-1"><input type="number" id="c1_T" class="table-input w-1/3" onchange="syncAndRefresh('child1Age', this.value)"><input type="number" id="c2_T" class="table-input w-1/3" onchange="syncAndRefresh('child2Age', this.value)"><input type="number" id="c3_T" class="table-input w-1/3" onchange="syncAndRefresh('child3Age', this.value)"></div></td>
-                ${columns.map((_, i) => `<td class="p-3 border-b text-center text-[10px]" data-type="ageChildren" data-col="${i}">---</td>`).join('')}</tr>`;
+            html += `<tr class="bg-slate-50/50 border-b-4"><td class="p-4 input-col font-bold text-[11px]">子供(数/年齢)<br><select id="childCount_T" class="table-input text-[10px] mb-1" onchange="syncAndRefresh('childCount', this.value)"><option value="0">0名</option><option value="1">1名</option><option value="2">2名</option><option value="3">3名</option></select><div class="flex gap-1"><input type="number" id="c1_T" class="table-input w-1/3" onchange="syncAndRefresh('child1Age', this.value)"><input type="number" id="c2_T" class="table-input w-1/3" onchange="syncAndRefresh('child2Age', this.value)"><input type="number" id="c3_T" class="table-input w-1/3" onchange="syncAndRefresh('child3Age', this.value)"></div></td>${columns.map((_, i) => `<td class="p-3 border-b text-center text-[10px]" data-type="ageChildren" data-col="${i}">---</td>`).join('')}</tr>`;
             
             html += `<tr class="income-header-row font-bold"><td class="p-4 input-col bg-blue-50 text-blue-900 border-b text-[11px]">【収入合計】</td>${columns.map((_, i) => `<td class="p-4 border-b text-center" data-type="totalIncome" data-col="${i}">0</td>`).join('')}</tr>`;
-            html += `<tr class="text-xs"><td class="p-3 input-col pl-8 border-b">本人収入</td>${columns.map((_, i) => `<td class="p-2 border-b"><input type="number" class="table-input income-input" data-cat="self" data-col="${i}" value="${i===0?500:0}" onchange="handleIncomePropagate(this); updateSimulation();"></td>`).join('')}</tr>`;
-            html += `<tr class="text-xs"><td class="p-3 input-col pl-8 border-b">配偶者収入</td>${columns.map((_, i) => `<td class="p-2 border-b"><input type="number" class="table-input income-input" data-cat="spouse" data-col="${i}" value="${i===0?150:0}" onchange="handleIncomePropagate(this); updateSimulation();"></td>`).join('')}</tr>`;
+            html += `<tr class="text-xs"><td class="p-3 input-col pl-8 border-b">本人収入</td>${columns.map((_, i) => `<td class="p-2 border-b"><input type="number" class="table-input income-input" data-cat="self" data-col="${i}" value="${i===0?500:0}" oninput="handleIncomePropagate(this); updateSimulation();"></td>`).join('')}</tr>`;
+            html += `<tr class="text-xs"><td class="p-3 input-col pl-8 border-b">配偶者収入</td>${columns.map((_, i) => `<td class="p-2 border-b"><input type="number" class="table-input income-input" data-cat="spouse" data-col="${i}" value="${i===0?150:0}" oninput="handleIncomePropagate(this); updateSimulation();"></td>`).join('')}</tr>`;
             html += `<tr class="text-xs"><td class="p-3 input-col pl-8 border-b font-bold text-blue-600">住宅ローン借入</td>${columns.map((_, i) => `<td class="p-2 border-b text-center text-blue-600 font-bold" data-type="loanIn" data-col="${i}">0</td>`).join('')}</tr>`;
             html += `<tr class="text-xs border-b-2"><td class="p-3 input-col pl-8 border-b">一時的な収入/他</td>${columns.map((_, i) => `<td class="p-2 border-b"><input type="number" class="table-input income-input" data-cat="tempInc" data-col="${i}" value="0" onchange="updateSimulation()"></td>`).join('')}</tr>`;
             
             html += `<tr class="expense-header-row font-bold"><td class="p-4 input-col bg-rose-50 text-rose-900 border-b text-[11px]">【支出合計】</td>${columns.map((_, i) => `<td class="p-4 border-b text-center" data-type="totalExpense" data-col="${i}">0</td>`).join('')}</tr>`;
-            html += `<tr class="text-xs font-bold text-rose-600"><td class="p-2 input-col pl-8 border-b font-bold text-rose-600">土地建物購入総額</td>${columns.map((_, i) => `<td class="p-1 border-b text-center text-rose-600 font-bold" data-type="propertyOut" data-col="${i}">0</td>`).join('')}</tr>`;
+            html += `<tr class="text-xs font-bold text-rose-600"><td class="p-2 input-col pl-8 border-b font-bold text-rose-600 text-[10px]">土地建物購入（ローン以外）</td>${columns.map((_, i) => `<td class="p-1 border-b text-center text-rose-600 font-bold" data-type="propertyOut" data-col="${i}">0</td>`).join('')}</tr>`;
             html += `<tr class="text-xs font-bold text-rose-600"><td class="p-2 input-col pl-8 border-b">住宅ローン返済額</td>${columns.map((_, i) => `<td class="p-1 border-b text-center" data-type="loanOut" data-col="${i}">0</td>`).join('')}</tr>`;
-            expenseCats.forEach((cat, idx) => {
-                html += `<tr class="text-xs"><td class="p-2 input-col pl-8 border-b">${cat.label}</td>${columns.map((_, i) => `<td class="p-1 border-b"><input type="number" class="table-input expense-input" data-cat="${cat.id}" data-col="${i}" value="${cat.def}" onchange="updateSimulation()"></td>`).join('')}</tr>`;
-            });
+            expenseCats.forEach((cat) => { html += `<tr class="text-xs"><td class="p-2 input-col pl-8 border-b">${cat.label}</td>${columns.map((_, i) => `<td class="p-1 border-b"><input type="number" class="table-input expense-input" data-cat="${cat.id}" data-col="${i}" value="${cat.def}" onchange="updateSimulation()"></td>`).join('')}</tr>`; });
             
             html += `<tr class="asset-total-row font-bold border-t-2"><td class="p-4 input-col bg-emerald-900 text-white border-b text-[11px]">【資産合計】</td>${columns.map((_, i) => `<td class="p-4 border-b text-center font-bold" data-type="totalAssets" data-col="${i}">0</td>`).join('')}</tr>`;
-            html += `<tr class="text-xs asset-sub-row"><td class="p-2 input-col pl-8 border-b">内：現金・預金</td>${columns.map((_, i) => `<td class="p-2 border-b text-center" data-type="assetCash" data-col="${i}">0</td>`).join('')}</tr>`;
-            html += `<tr class="text-xs asset-sub-row"><td class="p-2 input-col pl-8 border-b font-medium text-emerald-700">内：投資資産</td>${columns.map((_, i) => `<td class="p-2 border-b text-center" data-type="assetInvest" data-col="${i}">0</td>`).join('')}</tr>`;
-            html += `<tr class="text-xs asset-sub-row border-b-2"><td class="p-2 input-col pl-8 border-b font-medium text-emerald-700">内：企業型DC (65歳まで引出不可)</td>${columns.map((_, i) => `<td class="p-2 border-b text-center" data-type="assetDC" data-col="${i}">0</td>`).join('')}</tr>`;
+            html += `<tr class="text-xs asset-sub-row"><td class="p-2 input-col pl-8 border-b">内：現金・預貯金</td><td class="p-2 border-b"><input type="number" id="currentCash_T" class="table-input" onchange="syncAndRefresh('currentCash', this.value)"></td>${columns.slice(1).map((_, i) => `<td class="p-2 border-b text-center" data-type="assetCash" data-col="${i+1}">0</td>`).join('')}</tr>`;
+            html += `<tr class="text-xs asset-sub-row border-b-2"><td class="p-2 input-col pl-8 border-b font-medium text-emerald-700">内：投資資産</td><td class="p-2 border-b"><input type="number" id="currentInvest_T" class="table-input" onchange="syncAndRefresh('currentInvest', this.value)"></td>${columns.slice(1).map((_, i) => `<td class="p-2 border-b text-center font-medium text-emerald-700" data-type="assetInvest" data-col="${i+1}">0</td>`).join('')}</tr>`;
             
             html += `<tr class="bg-slate-100 font-bold"><td class="p-4 input-col bg-slate-200 border-b text-[11px]">年間収支(Net)</td>${columns.map((_, i) => `<td class="p-4 border-b text-center font-bold" data-type="balance" data-col="${i}">0</td>`).join('')}</tr>`;
-            
-            tbody.innerHTML = html;
-            syncTableInputs();
+            tbody.innerHTML = html; syncTableInputs();
         }
 
         function handleIncomePropagate(el) {
             if (el.dataset.col === "0") {
-                const cat = el.dataset.cat;
-                const val = el.value;
-                const rowInputs = document.querySelectorAll(`.income-input[data-cat="${cat}"]`);
-                rowInputs.forEach(input => {
-                    if (input.dataset.col !== "0" && (input.value === "0" || input.value === "")) {
-                        input.value = val;
-                    }
-                });
+                const cat = el.dataset.cat; const val = el.value;
+                document.querySelectorAll(`.income-input[data-cat="${cat}"]`).forEach(input => { if (input.dataset.col !== "0") input.value = val; });
             }
         }
 
-        function syncAndRefresh(id, val) {
-            const el = document.getElementById(id);
-            if (el) el.value = val;
-            updateSimulation();
-        }
-
+        function syncAndRefresh(id, val) { const el = document.getElementById(id); if (el) el.value = val; updateSimulation(); }
+        function syncTableFromModal(tableId, val) { const el = document.getElementById(tableId); if(el) el.value = val; }
         function syncTableInputs() {
-            const pairs = { 'duration_T':'duration', 'baseAge_T':'baseAge', 'spouseAge_T':'spouseAge', 'childCount_T':'childCount', 'c1_T':'child1Age', 'c2_T':'child2Age', 'c3_T':'child3Age' };
-            for (const [tId, mId] of Object.entries(pairs)) {
-                const t = document.getElementById(tId); const m = document.getElementById(mId);
-                if (t && m) t.value = m.value;
-            }
+            const pairs = { 'duration_T':'duration', 'baseAge_T':'baseAge', 'spouseAge_T':'spouseAge', 'childCount_T':'childCount', 'c1_T':'child1Age', 'c2_T':'child2Age', 'c3_T':'child3Age', 'currentCash_T':'currentCash', 'currentInvest_T':'currentInvest' };
+            for (const [tId, mId] of Object.entries(pairs)) { const t = document.getElementById(tId); const m = document.getElementById(mId); if (t && m) t.value = m.value; }
         }
 
-        function setText(id, val) {
-            const el = document.getElementById(id);
-            if (el) el.textContent = val;
-        }
+        function safeSetText(id, text) { const el = document.getElementById(id); if(el) el.textContent = text; }
+        function setSelectorText(query, val) { const el = document.querySelector(query); if (el) el.textContent = val; }
 
-        function setSelectorText(query, val) {
-            const el = document.querySelector(query);
-            if (el) el.textContent = val;
+        function calculatePMT(principal, yearlyRate, years) {
+            if (principal <= 0 || years <= 0) return 0;
+            const r = yearlyRate / 100 / 12; const n = years * 12;
+            if (r === 0) return (principal / years);
+            const pmt = (principal * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+            return (pmt * 12);
         }
 
         window.updateSimulation = () => {
@@ -521,159 +388,126 @@
             const c1 = parseInt(document.getElementById('child1Age')?.value || 0);
             const c2 = parseInt(document.getElementById('child2Age')?.value || 0);
             const c3 = parseInt(document.getElementById('child3Age')?.value || 0);
-
             const propTotal = parseFloat(document.getElementById('propertyTotal')?.value || 0);
             const initCash = parseFloat(document.getElementById('currentCash')?.value || 0);
             const initInvest = parseFloat(document.getElementById('currentInvest')?.value || 0);
-            const initDC = parseFloat(document.getElementById('currentDC')?.value || 0);
-
             const loanAmt = parseFloat(document.getElementById('loanAmount')?.value || 0);
-            const loanRate = parseFloat(document.getElementById('loanRate')?.value || 1.0) / 100;
-            const loanRepay = parseFloat(document.getElementById('loanRepaymentYear')?.value || 120);
+            const loanRate = parseFloat(document.getElementById('loanRate')?.value || 1.0);
+            const loanYears = parseInt(document.getElementById('loanYears')?.value || 35);
             const invRate = parseFloat(document.getElementById('investRate')?.value || 3.0) / 100;
-            const dcYearly = parseFloat(document.getElementById('dcYearly')?.value || 24);
             const parentSupport = parseFloat(document.getElementById('parentSupport')?.value || 0);
 
-            // Summary Card Updates with safety checks
-            const sDur = document.getElementById('summaryDuration');
-            if(sDur) sDur.textContent = `${baseAge+duration}歳まで (${duration}年)`;
-            
-            const sLoan = document.getElementById('summaryLoan');
-            if(sLoan) sLoan.textContent = `¥${loanAmt.toLocaleString()}万`;
-            
-            const sYield = document.getElementById('summaryYield');
-            if(sYield) sYield.textContent = `${(invRate*100).toFixed(1)}%`;
-            
-            const sProp = document.getElementById('summaryProperty');
-            if(sProp) sProp.textContent = `¥${propTotal.toLocaleString()}万`;
+            const loanRepaymentYear = calculatePMT(loanAmt, loanRate, loanYears);
+            safeSetText('calcLoanRepay', Math.floor(loanRepaymentYear).toLocaleString());
+            safeSetText('summaryDuration', `${baseAge+duration}歳まで (${duration}年)`);
+            safeSetText('summaryLoan', `¥${loanAmt.toLocaleString()}万`);
+            safeSetText('summaryYield', `${(invRate*100).toFixed(1)}%`);
+            safeSetText('summaryProperty', `¥${propTotal.toLocaleString()}万`);
 
             let runningCash = initCash + parentSupport;
             let runningInvest = initInvest;
-            let runningDC = initDC;
             let loanBalance = loanAmt;
-
             const yearlyData = [];
             const columnsTotal = Math.floor(duration / viewInterval);
 
             for (let year = 0; year <= duration; year++) {
                 const colIdx = year / viewInterval;
                 const safeCol = Math.floor(colIdx) > columnsTotal ? columnsTotal : Math.floor(colIdx);
-
-                let tInc = 0;
-                document.querySelectorAll(`.income-input[data-col="${safeCol}"]`).forEach(el => tInc += parseFloat(el.value || 0));
-                const loanIn = (year === 0) ? loanAmt : 0;
-                tInc += loanIn;
-
-                let tExp = 0;
-                document.querySelectorAll(`.expense-input[data-col="${safeCol}"]`).forEach(el => tExp += parseFloat(el.value || 0));
+                let tInc = 0; document.querySelectorAll(`.income-input[data-col="${safeCol}"]`).forEach(el => tInc += parseFloat(el.value || 0));
+                const loanIn = (year === 0) ? loanAmt : 0; tInc += loanIn;
                 const propertyOut = (year === 0) ? propTotal : 0;
+                let tExp = 0; document.querySelectorAll(`.expense-input[data-col="${safeCol}"]`).forEach(el => tExp += parseFloat(el.value || 0));
                 tExp += propertyOut;
-
-                let curLoanOut = 0;
-                if (loanBalance > 0) {
-                    const interest = loanBalance * loanRate;
-                    curLoanOut = Math.min(loanRepay, loanBalance + interest);
-                    loanBalance = Math.max(0, loanBalance + interest - curLoanOut);
-                }
+                let curLoanOut = 0; if (year > 0 && year <= loanYears && loanBalance > 0) { const interestYear = loanBalance * (loanRate / 100); curLoanOut = Math.min(loanRepaymentYear, loanBalance + interestYear); loanBalance = Math.max(0, loanBalance + interestYear - curLoanOut); }
                 tExp += curLoanOut;
-
-                if (year > 0) {
-                    runningInvest *= (1 + invRate);
-                    runningDC = (runningDC + dcYearly) * (1 + invRate);
-                }
-
-                const bal = tInc - tExp;
-                runningCash += (bal - (year > 0 ? dcYearly : 0));
+                if (year > 0) runningInvest *= (1 + invRate);
+                const bal = tInc - tExp; runningCash += bal;
 
                 if (year % viewInterval === 0) {
                     setSelectorText(`[data-type="ageSelf"][data-col="${colIdx}"]`, `${baseAge+year}歳`);
                     setSelectorText(`[data-type="ageSpouse"][data-col="${colIdx}"]`, `${spouseAge+year}歳`);
-                    let cText = [];
-                    if(childCount >= 1) cText.push(`①${c1+year}`);
-                    if(childCount >= 2) cText.push(`②${c2+year}`);
-                    if(childCount >= 3) cText.push(`③${c3+year}`);
-                    setSelectorText(`[data-type="ageChildren"][data-col="${colIdx}"]`, cText.length ? cText.join(' ') : '---');
-
+                    let cT = []; if(childCount >= 1) cT.push(`①${c1+year}`); if(childCount >= 2) cT.push(`②${c2+year}`); if(childCount >= 3) cT.push(`③${c3+year}`);
+                    setSelectorText(`[data-type="ageChildren"][data-col="${colIdx}"]`, cT.length ? cT.join(' ') : '---');
                     setSelectorText(`[data-type="totalIncome"][data-col="${colIdx}"]`, Math.floor(tInc).toLocaleString());
-                    setSelectorText(`[data-type="loanIn"][data-col="${colIdx}"]`, loanIn > 0 ? loanIn.toLocaleString() : '0');
+                    setSelectorText(`[data-type="loanIn"][data-col="${colIdx}"]`, loanIn.toLocaleString()); 
                     setSelectorText(`[data-type="totalExpense"][data-col="${colIdx}"]`, Math.floor(tExp).toLocaleString());
-                    setSelectorText(`[data-type="propertyOut"][data-col="${colIdx}"]`, propertyOut > 0 ? propertyOut.toLocaleString() : '0');
+                    setSelectorText(`[data-type="propertyOut"][data-col="${colIdx}"]`, (year===0 ? Math.max(0, propTotal - loanAmt) : 0).toLocaleString());
                     setSelectorText(`[data-type="loanOut"][data-col="${colIdx}"]`, Math.floor(curLoanOut).toLocaleString());
-                    setSelectorText(`[data-type="assetCash"][data-col="${colIdx}"]`, Math.floor(runningCash).toLocaleString());
-                    setSelectorText(`[data-type="assetInvest"][data-col="${colIdx}"]`, Math.floor(runningInvest).toLocaleString());
-                    setSelectorText(`[data-type="assetDC"][data-col="${colIdx}"]`, Math.floor(runningDC).toLocaleString());
-                    
-                    const totalAsset = runningCash + runningInvest + runningDC;
-                    const aEl = document.querySelector(`[data-type="totalAssets"][data-col="${colIdx}"]`);
-                    if(aEl) {
-                        aEl.textContent = Math.floor(totalAsset).toLocaleString();
-                        aEl.className = `p-4 border-b text-center font-bold ${totalAsset>=0?'text-emerald-700':'text-rose-700'}`;
-                    }
-
-                    const bEl = document.querySelector(`[data-type="balance"][data-col="${colIdx}"]`);
-                    if(bEl) {
-                        bEl.textContent = (bal>=0?'+':'') + Math.floor(bal).toLocaleString();
-                        bEl.className = `p-4 border-b text-center font-bold ${bal>=0?'text-emerald-600':'text-rose-600'}`;
-                    }
-                    if(year === 0) {
-                        const sBal = document.getElementById('summaryBalance');
-                        if(sBal) sBal.textContent = `¥${Math.floor(bal).toLocaleString()}万`;
-                    }
+                    if (year > 0) { setSelectorText(`[data-type="assetCash"][data-col="${colIdx}"]`, Math.floor(runningCash).toLocaleString()); setSelectorText(`[data-type="assetInvest"][data-col="${colIdx}"]`, Math.floor(runningInvest).toLocaleString()); }
+                    const totalAsset = runningCash + runningInvest;
+                    const aEl = document.querySelector(`[data-type="totalAssets"][data-col="${colIdx}"]`); if(aEl) { aEl.textContent = Math.floor(totalAsset).toLocaleString(); aEl.className = `p-4 border-b text-center font-bold ${totalAsset>=0?'text-emerald-700':'text-rose-700'}`; }
+                    const bEl = document.querySelector(`[data-type="balance"][data-col="${colIdx}"]`); if(bEl) { bEl.textContent = (bal>=0?'+':'') + Math.floor(bal).toLocaleString(); bEl.className = `p-4 border-b text-center font-bold ${bal>=0?'text-emerald-600':'text-rose-600'}`; }
+                    if(year === 0) safeSetText('summaryBalance', `¥${Math.floor(bal).toLocaleString()}万`);
                 }
-                yearlyData.push({ year, age: baseAge+year, assets: runningCash + runningInvest + runningDC, income: tInc, expense: tExp });
+                yearlyData.push({ year, age: baseAge+year, assets: runningCash + runningInvest, income: tInc, expense: tExp });
             }
             renderCharts(yearlyData);
         };
 
         function renderCharts(data) {
-            const ctxEl = document.getElementById('mainChart');
-            if(!ctxEl) return;
-            const ctx = ctxEl.getContext('2d');
-            if (mainChart) mainChart.destroy();
+            const ctxEl = document.getElementById('mainChart'); if(!ctxEl) return;
+            const ctx = ctxEl.getContext('2d'); if (mainChart) mainChart.destroy();
+            
             if (chartType === 'line') {
-                const skip = (viewInterval===1) ? 2 : 1;
-                const labels = data.filter((d,i) => i % skip === 0).map(d => `${d.age}歳`);
-                const assets = data.filter((d,i) => i % skip === 0).map(d => d.assets);
-                mainChart = new Chart(ctx, {
-                    type: 'line',
-                    data: { labels, datasets: [{ label: '総資産額', data: assets, borderColor: '#002D5B', backgroundColor: 'rgba(0,45,91,0.05)', fill: true, tension: 0.3 }] },
-                    options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
-                });
+                const skip = (viewInterval===1) ? 2 : 1; const labels = data.filter((d,i) => i % skip === 0).map(d => `${d.age}歳`); const assets = data.filter((d,i) => i % skip === 0).map(d => d.assets);
+                mainChart = new Chart(ctx, { type: 'line', data: { labels, datasets: [{ label: '総資産額', data: assets, borderColor: '#002D5B', backgroundColor: 'rgba(0,45,91,0.05)', fill: true, tension: 0.3 }] }, options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } } });
             } else {
-                const incomes = Array.from(document.querySelectorAll('.income-input[data-col="0"]')).map(el => parseFloat(el.value||0));
-                const expenses = Array.from(document.querySelectorAll('.expense-input[data-col="0"]')).map(el => parseFloat(el.value||0));
-                const loanPay = parseFloat(document.querySelector('[data-type="loanOut"][data-col="0"]')?.textContent.replace(/,/g,'') || 0);
+                const targetYear = parseInt(document.getElementById('chartYearSelector')?.value || 0);
+                const colIdx = targetYear / viewInterval;
+                
+                const incomeItems = [];
+                incomeItems.push({ label: '本人収入', val: parseFloat(document.querySelector(`.income-input[data-cat="self"][data-col="${colIdx}"]`)?.value || 0) });
+                incomeItems.push({ label: '配偶者収入', val: parseFloat(document.querySelector(`.income-input[data-cat="spouse"][data-col="${colIdx}"]`)?.value || 0) });
+                incomeItems.push({ label: '住宅ローン借入', val: (targetYear === 0) ? parseFloat(document.getElementById('loanAmount')?.value || 0) : 0 });
+                incomeItems.push({ label: '一時収入/他', val: parseFloat(document.querySelector(`.income-input[data-cat="tempInc"][data-col="${colIdx}"]`)?.value || 0) });
+                const filteredIncomes = incomeItems.filter(i => i.val > 0);
+
+                const expenseItems = [];
+                expenseItems.push({ label: '土地建物(自己資金分)', val: (targetYear === 0) ? Math.max(0, parseFloat(document.getElementById('propertyTotal')?.value || 0) - parseFloat(document.getElementById('loanAmount')?.value || 0)) : 0 });
+                expenseItems.push({ label: '住宅ローン返済', val: parseFloat(document.querySelector(`[data-type="loanOut"][data-col="${colIdx}"]`)?.textContent.replace(/,/g,'') || 0) });
+                expenseCats.forEach(cat => {
+                    expenseItems.push({ label: cat.label, val: parseFloat(document.querySelector(`.expense-input[data-cat="${cat.id}"][data-col="${colIdx}"]`)?.value || 0) });
+                });
+                const filteredExpenses = expenseItems.filter(i => i.val > 0);
+
+                const allItems = [...filteredIncomes, ...filteredExpenses];
+                const titleText = (targetYear === 0) ? '現在の収支構成' : `${targetYear}年後の収支構成`;
+                document.getElementById('chartTitle').innerHTML = `<span class="w-1.5 h-4 bg-[#002D5B] mr-2 rounded-full"></span>${titleText}`;
+
+                // 収入は青系、支出は赤系のパレット
+                const incomePalette = ['#1e40af', '#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe'];
+                const expensePalette = ['#991b1b', '#dc2626', '#ef4444', '#f87171', '#fca5a5', '#fecaca', '#f87171', '#fb923c', '#fbbf24'];
+                
+                const backgroundColors = [
+                    ...filteredIncomes.map((_, i) => incomePalette[i % incomePalette.length]),
+                    ...filteredExpenses.map((_, i) => expensePalette[i % expensePalette.length])
+                ];
+
                 mainChart = new Chart(ctx, {
                     type: 'doughnut',
                     data: {
-                        labels: ['本人収入', '配偶者収入', 'ローン返済', '基本生活費', '住居費', '教育費', 'その他'],
-                        datasets: [{ data: [incomes[0], incomes[1], loanPay, expenses[0], expenses[1], expenses[3], expenses[4]||0], backgroundColor: ['#3b82f6','#60a5fa','#f87171','#fca5a5','#fb7185','#fbbf24','#94a3b8'] }]
+                        labels: allItems.map(i => i.label),
+                        datasets: [{
+                            data: allItems.map(i => i.val),
+                            backgroundColor: backgroundColors,
+                            borderWidth: 2,
+                            borderColor: '#ffffff'
+                        }]
                     },
-                    options: { maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+                    options: { 
+                        maintainAspectRatio: false, 
+                        plugins: { 
+                            legend: { position: 'right', labels: { boxWidth: 12, font: { size: 10 } } } 
+                        } 
+                    }
                 });
             }
         }
 
-        window.openModal = (id) => { 
-            const el = document.getElementById(id);
-            if(el) el.style.display = 'flex';
-            if(id==='loadModal') window.loadPlansList(); 
-        };
-        window.closeModal = (id) => { 
-            const el = document.getElementById(id);
-            if(el) el.style.display = 'none'; 
-        };
-
-        function initDate() {
-            const d = new Date();
-            document.querySelectorAll('.todayDateLabel').forEach(el => el.textContent = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`);
-        }
-
-        document.addEventListener('DOMContentLoaded', () => { 
-            initDate(); 
-            initTable(); 
-            updateSimulation(); 
-        });
+        window.openModal = (id) => { const el = document.getElementById(id); if(el) el.style.display = 'flex'; if(id==='loadModal') window.loadPlansList(); };
+        window.closeModal = (id) => { const el = document.getElementById(id); if(el) el.style.display = 'none'; };
+        function initDate() { const d = new Date(); document.querySelectorAll('.todayDateLabel').forEach(el => el.textContent = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`); }
+        document.addEventListener('DOMContentLoaded', () => { initDate(); initTable(); updateSimulation(); });
     </script>
 </body>
 </html>
