@@ -232,7 +232,7 @@
                         <h3 class="font-bold text-emerald-900 mb-4">📈 運用・初期資産</h3>
                         <div><label class="text-[10px] font-bold block">想定利回り (%)</label><input type="number" id="investRate" value="3.0" step="0.1" class="w-full border border-black rounded-lg p-2 text-center" onchange="updateSimulation()"></div>
                         <div class="mt-8 pt-4 border-t border-emerald-200">
-                            <label class="text-xs font-bold block mb-3">開始時資産</label>
+                            <label class="text-xs font-bold block mb-3 text-emerald-800">開始時資産</label>
                             <div class="grid grid-cols-2 gap-4">
                                 <div><label class="text-[9px] block">現金 (万)</label><input type="number" id="currentCash" value="1000" class="w-full border border-black rounded p-2 text-center" onchange="syncTableFromModal('currentCash_T', this.value); updateSimulation();"></div>
                                 <div><label class="text-[9px] block">投資 (万)</label><input type="number" id="currentInvest" value="300" class="w-full border border-black rounded p-2 text-center" onchange="syncTableFromModal('currentInvest_T', this.value); updateSimulation();"></div>
@@ -245,7 +245,7 @@
         </div>
     </div>
 
-    <!-- モーダル（読込・保存） -->
+    <!-- 読込・保存モーダル -->
     <div id="saveModal" class="modal-backdrop"><div class="modal-content text-center"><h2 class="text-xl font-bold mb-6">現在のプランを保存</h2><input type="text" id="saveNameInput" class="w-full border border-black p-4 rounded-xl mb-6 text-lg text-center" placeholder="例：テスト様 2025年案"><div class="flex justify-center gap-3"><button onclick="closeModal('saveModal')" class="px-8 py-2 text-slate-400">閉じる</button><button onclick="savePlan()" class="bg-emerald-600 text-white px-10 py-2 rounded-xl font-bold">保存実行</button></div></div></div>
     <div id="loadModal" class="modal-backdrop"><div class="modal-content"><h2 class="text-xl font-bold mb-6">保存済みリスト</h2><div id="planList" class="space-y-3 mb-6 max-h-96 overflow-y-auto"></div><div class="flex justify-end"><button onclick="closeModal('loadModal')" class="px-6 py-2 border rounded-lg">閉じる</button></div></div></div>
 
@@ -372,6 +372,8 @@
             document.querySelectorAll(`.income-input[data-cat="${cat}"]`).forEach(input => { if (parseInt(input.dataset.col) > colIdx) input.value = val; });
         }
 
+        function syncAndRefresh(id, val) { const el = document.getElementById(id); if (el) el.value = val; updateSimulation(); }
+
         window.updateSimulation = () => {
             const baseAge = parseInt(document.getElementById('baseAge')?.value || 35);
             const spouseAge = parseInt(document.getElementById('spouseAge')?.value || 32);
@@ -400,14 +402,19 @@
             const yearlyDataArr = [];
             for (let year = 0; year <= duration; year++) {
                 let tInc = 0; document.querySelectorAll(`.income-input[data-col="${year}"]`).forEach(el => tInc += parseFloat(el.value || 0));
-                const lIn = (year === 0) ? loanAmt : 0; tInc += lIn;
-                const pOut = (year === 0) ? propTotal : 0;
+                const lIn = (year === 0) ? loanAmt : 0;
+
+                const propertyOut = (year === 0) ? Math.max(0, propTotal - loanAmt) : 0;
                 let tExp = 0; document.querySelectorAll(`.expense-input[data-col="${year}"]`).forEach(el => tExp += parseFloat(el.value || 0));
-                tExp += pOut;
+                tExp += propertyOut;
+                
                 let curL = 0; if (year > 0 && year <= loanYears && lBal > 0) { const iY = lBal * (loanRate / 100); curL = Math.min(loanRepaymentYear, lBal + iY); lBal = Math.max(0, lBal + iY - curL); }
                 tExp += curL; if (year > 0) runI *= (1 + invRate);
-                const bal = tInc - tExp; runC += bal;
-
+                
+                const bal = Math.floor(tInc) - Math.floor(tExp); 
+                
+                const tA = runC + runI;
+                
                 const sel = (type) => document.querySelector(`[data-type="${type}"][data-col="${year}"]`);
                 if(sel('ageSelf')) sel('ageSelf').textContent = `${baseAge+year}歳`;
                 if(sel('ageSpouse')) sel('ageSpouse').textContent = `${spouseAge+year}歳`;
@@ -416,13 +423,16 @@
                 if(sel('totalIncome')) sel('totalIncome').textContent = Math.floor(tInc).toLocaleString();
                 if(sel('totalExpense')) sel('totalExpense').textContent = Math.floor(tExp).toLocaleString();
                 if(sel('loanIn')) sel('loanIn').textContent = lIn.toLocaleString();
-                if(sel('propertyOut')) sel('propertyOut').textContent = (year===0 ? Math.max(0, propTotal - loanAmt) : 0).toLocaleString();
+                if(sel('propertyOut')) sel('propertyOut').textContent = propertyOut.toLocaleString();
                 if(sel('loanOut')) sel('loanOut').textContent = Math.floor(curL).toLocaleString();
                 if (year > 0) { if(sel('assetCash')) sel('assetCash').textContent = Math.floor(runC).toLocaleString(); if(sel('assetInvest')) sel('assetInvest').textContent = Math.floor(runI).toLocaleString(); }
-                const tA = runC + runI; const aEl = sel('totalAssets'); if(aEl) { aEl.textContent = Math.floor(tA).toLocaleString(); aEl.className = `p-4 border-b text-center font-bold ${tA>=0?'text-emerald-700':'text-rose-700'}`; }
-                const bEl = sel('balance'); if(bEl) { bEl.textContent = (bal>=0?'+':'') + Math.floor(bal).toLocaleString(); bEl.className = `p-4 border-b text-center font-bold ${bal>=0?'text-emerald-600':'text-rose-600'}`; }
+                
+                const aEl = sel('totalAssets'); if(aEl) { aEl.textContent = Math.floor(tA).toLocaleString(); aEl.className = `p-4 border-b text-center font-bold ${tA>=0?'text-emerald-700':'text-rose-700'}`; }
+                const bEl = sel('balance'); if(bEl) { bEl.textContent = (bal>=0?'+':'') + bal.toLocaleString(); bEl.className = `p-4 border-b text-center font-bold ${bal>=0?'text-emerald-600':'text-rose-600'}`; }
 
-                yearlyDataArr.push({ year, ageS: baseAge+year, ageSp: spouseAge+year, cAges: cInfo.join(', '), memo: document.querySelector(`.event-memo[data-col="${year}"]`)?.value || "", income: tInc, expense: tExp, cash: runC, invest: runI, assets: runC + runI, selfInc: parseFloat(document.querySelector(`.income-input[data-cat="self"][data-col="${year}"]`)?.value || 0), spouseInc: parseFloat(document.querySelector(`.income-input[data-cat="spouse"][data-col="${year}"]`)?.value || 0), loanIn: lIn, tempInc: parseFloat(document.querySelector(`.income-input[data-cat="tempInc"][data-col="${year}"]`)?.value || 0), propertyOut: (year===0 ? Math.max(0, propTotal - loanAmt) : 0), loanOut: curL, exps: expenseCats.map(c => ({ label: c.label, val: parseFloat(document.querySelector(`.expense-input[data-cat="${c.id}"][data-col="${year}"]`)?.value || 0) })) });
+                yearlyDataArr.push({ year, ageS: baseAge+year, ageSp: spouseAge+year, cAges: cInfo.join(', '), memo: document.querySelector(`.event-memo[data-col="${year}"]`)?.value || "", income: tInc, expense: tExp, cash: runC, invest: runI, assets: tA, selfInc: parseFloat(document.querySelector(`.income-input[data-cat="self"][data-col="${year}"]`)?.value || 0), spouseInc: parseFloat(document.querySelector(`.income-input[data-cat="spouse"][data-col="${year}"]`)?.value || 0), loanIn: lIn, tempInc: parseFloat(document.querySelector(`.income-input[data-cat="tempInc"][data-col="${year}"]`)?.value || 0), propertyOut: propertyOut, loanOut: curL, exps: expenseCats.map(c => ({ label: c.label, val: parseFloat(document.querySelector(`.expense-input[data-cat="${c.id}"][data-col="${year}"]`)?.value || 0) })) });
+                
+                runC += bal;
             }
             window.lastData = yearlyDataArr; renderCharts(yearlyDataArr);
         };
@@ -436,8 +446,8 @@
                 const assets = data.filter((_,i) => i % 2 === 0).map(i => i.assets);
                 mainChart = new Chart(ctx, { type: 'line', data: { labels, datasets: [{ label: '総資産', data: assets, borderColor: '#002D5B', fill: true, tension: 0.3 }] }, options: { maintainAspectRatio: false, animation: false } });
             } else {
-                const ins = [{ label: '本人', v: d.selfInc }, { label: '配', v: d.spouseInc }, { label: '借', v: d.loanIn }, { label: '他', v: d.tempInc }].filter(i => i.v > 0);
-                const exs = [{ label: '物', v: d.propertyOut }, { label: 'ロ', v: d.loanOut }, ...d.exps.map(e=>({label:e.label, v:e.val}))].filter(i => i.v > 0);
+                const ins = [{ label: '本人', val: d.selfInc }, { label: '配', val: d.spouseInc }, { label: '借', val: d.loanIn }, { label: '他', val: d.tempInc }].filter(i => i.val > 0);
+                const exs = [{ label: '物', val: d.propertyOut }, { label: 'ロ', val: d.loanOut }, ...d.exps.map(e=>({label:e.label, v:e.val}))].filter(i => i.v > 0);
                 mainChart = new Chart(ctx, { type: 'doughnut', data: { labels: [...ins, ...exs].map(i => i.label || i.l), datasets: [{ data: [...ins, ...exs].map(i => i.val || i.v), backgroundColor: [...ins.map((_,i)=>inPal[i%inPal.length]), ...exs.map((_,i)=>exPal[i%exPal.length])], borderWidth: 1 }] }, options: { maintainAspectRatio: false, animation: false, plugins: { legend: { position: 'right' } } } });
             }
         }
@@ -452,14 +462,14 @@
             const pieImg = mainChart.toBase64Image();
 
             printArea.innerHTML = `
-                <div class="print-cover"><h1>ライフプラン・分析報告書</h1><p>顧客名：${document.querySelector('.clientNameLabel').innerText} 様</p><p>作成日：${new Date().toLocaleDateString('ja-JP')}</p></div>
+                <div class="print-cover"><h1>ライフプラン・分析シミュレーション報告書</h1><p>顧客名：${document.querySelector('.clientNameLabel').innerText} 様</p><p>作成日：${new Date().toLocaleDateString('ja-JP')}</p></div>
                 <div class="page-break">
                     <h2>1. シミュレーション概要と結果分析グラフ</h2>
                     <div class="print-summary-grid">
                         <div class="print-summary-item"><label>シミュレーション期間</label><span>${document.getElementById('summaryDuration').innerText}</span></div>
                         <div class="print-summary-item"><label>土地建物総額</label><span>${document.getElementById('summaryProperty').innerText}</span></div>
                         <div class="print-summary-item"><label>借入額</label><span>${document.getElementById('summaryLoan').innerText}</span></div>
-                        <div class="print-summary-item"><label>運用利回り</label><span>${document.getElementById('summaryYield').innerText}</span></div>
+                        <div class="print-summary-item"><label>利回り</label><span>${document.getElementById('summaryYield').innerText}</span></div>
                     </div>
                     <div class="print-chart-row">
                         <div class="print-chart-box"><h3>将来資産残高の推移</h3><img src="${lineImg}" class="print-chart-img"></div>
@@ -472,7 +482,7 @@
             for(let p = 0; p < Math.ceil(data.length / chunkSize); p++) {
                 const chunk = data.slice(p * chunkSize, (p + 1) * chunkSize);
                 const table = document.createElement('table'); if (p < Math.ceil(data.length / chunkSize) - 1) table.className = "page-break";
-                let tHtml = `<tr class="bg-slate-800 text-white"><th class="print-label-col">項目 / 経過年</th>${chunk.map(d => `<th>${d.year===0?'現在':d.year+'年後'}</th>`).join('')}</tr>`;
+                let tHtml = `<tr class="bg-slate-800 text-white"><th class="print-label-col">項目</th>${chunk.map(d => `<th>${d.year===0?'現在':d.year+'年後'}</th>`).join('')}</tr>`;
                 tHtml += `<tr><td class="print-label-col">家族年齢(本人/配/子)</td>${chunk.map(d => `<td>${d.ageS}/${d.ageSp}/${d.cAges}</td>`).join('')}</tr>`;
                 tHtml += `<tr class="print-income-header"><td>【収入合計】</td>${chunk.map(d => `<td>${Math.floor(d.income).toLocaleString()}</td>`).join('')}</tr>`;
                 tHtml += `<tr class="print-income-row"><td class="print-sub-label">本人収入</td>${chunk.map(d => `<td>${Math.floor(d.selfInc).toLocaleString()}</td>`).join('')}</tr>`;
@@ -482,16 +492,17 @@
                 tHtml += `<tr class="print-asset-header"><td>【資産合計】</td>${chunk.map(d => `<td>${Math.floor(d.assets).toLocaleString()}</td>`).join('')}</tr>`;
                 tHtml += `<tr class="print-asset-row"><td class="print-sub-label">内：現金・預金</td>${chunk.map(d => `<td>${Math.floor(d.cash).toLocaleString()}</td>`).join('')}</tr>`;
                 tHtml += `<tr class="print-asset-row"><td class="print-sub-label">内：投資資産</td>${chunk.map(d => `<td>${Math.floor(d.invest).toLocaleString()}</td>`).join('')}</tr>`;
+                tHtml += `<tr class="print-balance-row"><td>年間収支(Net)</td>${chunk.map(d => `<td>${(Math.floor(d.income) - Math.floor(d.expense)).toLocaleString()}</td>`).join('')}</tr>`;
                 table.innerHTML = tHtml; printArea.appendChild(table);
             }
-            setTimeout(() => { window.print(); window.showToast("資産レポートを出力しました"); }, 1000);
+            setTimeout(() => { window.print(); window.showToast("レポートを出力しました"); }, 1000);
         }
 
         async function prepareAndPrintBreakdown() {
-            window.showToast("円グラフを生成中...");
+            window.showToast("全年度の円グラフを順次生成中...");
             const data = window.lastData; if(!data) return;
             const printArea = document.getElementById('printOnlyArea'); printArea.innerHTML = '';
-            printArea.innerHTML = `<div class="print-cover"><h1>年度別・収支詳細ビジュアルレポート</h1><p>顧客名：${document.querySelector('.clientNameLabel').innerText} 様</p></div><div class="page-break"><h2>全期間の収支構成グラフ一覧</h2><div class="pie-grid" id="piePrintGrid"></div></div>`;
+            printArea.innerHTML = `<div class="print-cover"><h1>年度別・収支詳細ビジュアルレポート</h1><p>顧客名：${document.querySelector('.clientNameLabel').innerText} 様</p></div><div class="page-break"><h2>全期間の収支内訳円グラフ一覧</h2><div class="pie-grid" id="piePrintGrid"></div></div>`;
             const grid = document.getElementById('piePrintGrid');
             const hCanvas = document.getElementById('hiddenPieCanvas'); const hCtx = hCanvas.getContext('2d');
             const tempPie = new Chart(hCtx, { type: 'doughnut', options: { animation: false, responsive: false, plugins: { legend: { display: false } } } });
@@ -509,9 +520,14 @@
             setTimeout(() => { window.print(); window.showToast("収支レポートを出力しました"); }, 1000);
         }
 
-        window.openModal = (id) => { const el = document.getElementById(id); if(el) el.style.display = 'flex'; if(id==='loadModal') window.loadPlansList(); };
+        window.openModal = (id) => { 
+            const el = document.getElementById(id); 
+            if(el) el.style.display = 'flex'; 
+            if(id === 'loadModal') window.loadPlansList();
+        };
         window.closeModal = (id) => { const el = document.getElementById(id); if(el) el.style.display = 'none'; };
         window.showToast = (msg) => { const c = document.getElementById('toastContainer'); const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; c.appendChild(t); setTimeout(() => t.remove(), 4000); };
+        
         document.addEventListener('DOMContentLoaded', () => { initDate(); toggleChildInputs(); initTable(); updateSimulation(); });
     </script>
 </body>
